@@ -1,0 +1,82 @@
+.list {
+	list-style: none;
+	margin: 0;
+	padding: 0;
+	display: grid;
+}
+.item {
+	display: grid;
+	grid-template-columns: 14px 1fr;
+	gap: 12px;
+	padding-bottom: 16px;
+	position: relative;
+}
+.item:not(:last-child)::before {
+	content: "";
+	position: absolute;
+	left: 6px;
+	top: 16px;
+	bottom: 0;
+	width: 2px;
+	background: var(--line);
+}
+.dot {
+	width: 14px;
+	height: 14px;
+	border-radius: 50%;
+	margin-top: 3px;
+	border: 3px solid var(--paper);
+	box-shadow: 0 0 0 1px var(--line);
+	background: var(--ink-3);
+	position: relative;
+}
+.confirmed {
+	background: var(--pine);
+}
+.pending {
+	background: var(--amber);
+}
+.failed {
+	background: var(--coral);
+}
+.body {
+	min-width: 0;
+	display: grid;
+	gap: 4px;
+}
+.top {
+	display: flex;
+	justify-content: space-between;
+	gap: 10px;
+	align-items: flex-start;
+	font-size: 0.9rem;
+}
+.meta {
+	display: flex;
+	flex-wrap: wrap;
+	gap: 4px 14px;
+	font-size: 0.78rem;
+	color: var(--ink-3);
+	align-items: center;
+}
+.ref {
+	display: inline-flex;
+	align-items: center;
+	gap: 4px;
+	font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+	font-size: 0.76rem;
+	background: var(--stone);
+	border: 0;
+	padding: 2px 6px;
+	border-radius: 6px;
+	text-decoration: none;
+	word-break: break-all;
+}
+a.ref {
+	color: var(--pine);
+}
+.error {
+	font-size: 0.8rem;
+	color: var(--coral);
+	word-break: break-word;
+}

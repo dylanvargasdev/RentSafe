@@ -1,0 +1,21 @@
+[package]
+name = "rental-registry"
+description = "RentSafe: acuerdos de alquiler on-chain vinculados a un escrow de Trustless Work"
+edition.workspace = true
+license.workspace = true
+repository.workspace = true
+publish = false
+version.workspace = true
+
+[package.metadata.stellar]
+cargo_inherit = true
+
+[lib]
+crate-type = ["cdylib"]
+doctest = false
+
+[dependencies]
+soroban-sdk = { workspace = true }
+
+[dev-dependencies]
+soroban-sdk = { workspace = true, features = ["testutils"] }

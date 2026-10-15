@@ -1,0 +1,114 @@
+.flow {
+	margin: 0;
+	display: grid;
+	grid-template-columns: minmax(0, 1fr) 40px minmax(0, 1.1fr) minmax(0, 1.4fr);
+	align-items: center;
+	gap: 0 12px;
+}
+.node {
+	display: grid;
+	gap: 2px;
+	justify-items: start;
+	padding: 14px;
+	border-radius: 14px;
+	border: 1px solid var(--line);
+	background: var(--paper);
+	min-width: 0;
+}
+.nodeIcon {
+	width: 36px;
+	height: 36px;
+	border-radius: 10px;
+	display: grid;
+	place-items: center;
+	background: var(--stone);
+	color: var(--ink-2);
+	margin-bottom: 6px;
+}
+.vault {
+	border-style: dashed;
+}
+.vaultOn {
+	border: 1.5px solid var(--pine);
+	background: var(--pine-soft);
+}
+.vaultOn .nodeIcon {
+	background: var(--pine);
+	color: #fff;
+}
+.held {
+	font-size: 1.25rem;
+	font-weight: 800;
+	color: var(--pine-strong);
+	letter-spacing: -0.02em;
+}
+.wire {
+	height: 2px;
+	background: repeating-linear-gradient(
+		90deg,
+		#cfd5d1 0 6px,
+		transparent 6px 11px
+	);
+}
+.wireOn {
+	background: var(--pine);
+}
+.branches {
+	display: grid;
+	gap: 10px;
+	min-width: 0;
+}
+.branch {
+	border-radius: 12px;
+	padding: 10px 12px;
+	border-left: 3px solid #cfd5d1;
+	background: var(--stone);
+	display: grid;
+	gap: 2px;
+	color: var(--ink-2);
+}
+.branchHead {
+	display: flex;
+	align-items: center;
+	gap: 6px;
+	font-weight: 700;
+	color: var(--ink);
+	font-size: 0.9rem;
+}
+.b_held {
+	border-left-color: var(--sky);
+}
+.b_done {
+	border-left-color: var(--pine);
+	background: var(--pine-soft);
+}
+.b_done .branchHead {
+	color: var(--pine-strong);
+}
+.b_blocked {
+	border-left-color: var(--coral);
+	background: var(--coral-soft);
+}
+
+@media (max-width: 760px) {
+	.flow {
+		grid-template-columns: 1fr;
+		gap: 0;
+	}
+	.wire {
+		width: 2px;
+		height: 22px;
+		margin-left: 32px;
+		background: repeating-linear-gradient(
+			180deg,
+			#cfd5d1 0 6px,
+			transparent 6px 11px
+		);
+	}
+	.wireOn {
+		background: var(--pine);
+	}
+	.branches {
+		margin-top: 12px;
+	}
+}

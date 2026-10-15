@@ -1,0 +1,38 @@
+{
+  "name": "scaffold-stellar-agentic",
+  "version": "0.0.0",
+  "private": true,
+  "scripts": {
+    "dev": "npm start",
+    "prestart": "node scripts/dev-guard.mjs",
+    "setup:tools": "node scripts/install-tools.mjs",
+    "start": "npm start --workspace app",
+    "doctor": "node scripts/doctor.mjs",
+    "contracts:build": "node scripts/contracts-build.mjs",
+    "contracts:test": "cargo test",
+    "fmt:check": "cargo fmt --all -- --check",
+    "pretypecheck": "node scripts/ensure-clients.mjs",
+    "typecheck": "npm run typecheck --workspace app",
+    "lint": "npm run lint --workspaces --if-present",
+    "format": "prettier . --write",
+    "format:check": "prettier . --check",
+    "check": "npm run contracts:test && npm run fmt:check && npm run typecheck && npm run lint && npm run format:check",
+    "prebuild": "node scripts/ensure-clients.mjs",
+    "build": "npm run build --workspace app",
+    "tw:smoke": "node scripts/tw-smoke.mjs",
+    "agents:sync": "node scripts/agents-sync.mjs",
+    "agents:check": "node scripts/agents-sync.mjs --check",
+    "postinstall": "node scripts/agents-sync.mjs"
+  },
+  "workspaces": [
+    "app",
+    "app-lib",
+    "app-lib/clients/*"
+  ],
+  "devDependencies": {
+    "prettier": "^3.8.3"
+  },
+  "prettier": "@theahaco/ts-config/prettier",
+  "packageManager": "npm@11.17.0",
+  "description": "Prompt-to-dApp starter: Scaffold Stellar + Trustless Work escrows + Cavos email/Google wallets + agent skills for any coding agent"
+}

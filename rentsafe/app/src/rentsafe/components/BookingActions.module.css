@@ -1,0 +1,15 @@
+.wrap {
+	display: grid;
+	gap: 14px;
+}
+.action {
+	display: grid;
+	gap: 6px;
+}
+.sim {
+	display: grid;
+	gap: 8px;
+	padding: 12px;
+	border-radius: 12px;
+	border: 1px dashed #cfd5d1;
+}

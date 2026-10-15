@@ -1,0 +1,20 @@
+.panel {
+	display: grid;
+	gap: 14px;
+	justify-items: start;
+}
+.chips {
+	display: flex;
+	gap: 8px;
+	flex-wrap: wrap;
+}
+.fields {
+	display: grid;
+	grid-template-columns: repeat(auto-fill, minmax(min(100%, 170px), 1fr));
+	gap: 12px;
+	width: 100%;
+	align-items: end;
+}
+.avail {
+	min-height: 44px;
+}

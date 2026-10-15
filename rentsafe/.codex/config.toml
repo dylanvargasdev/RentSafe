@@ -1,0 +1,12 @@
+# Codex project config (loaded for trusted projects). Optional docs MCP servers.
+# Codex reads AGENTS.md and .agents/skills natively.
+
+# Stellar Raven: Stellar docs + ecosystem data. Sign in once: `codex mcp login stellar-raven`
+[mcp_servers.stellar-raven]
+url = "https://raven.stellar.org/mcp"
+
+[mcp_servers.trustless-work]
+url = "https://docs.trustlesswork.com/trustless-work/~gitbook/mcp"
+
+[mcp_servers.openzeppelin-stellar]
+url = "https://mcp.openzeppelin.com/contracts/stellar/mcp"

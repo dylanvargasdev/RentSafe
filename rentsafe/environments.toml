@@ -1,0 +1,80 @@
+### ─────────────────────────────────────────────────────────────────────────────
+### Scaffold Stellar environments
+###
+### Which section is used is decided by STELLAR_SCAFFOLD_ENV (set in app/.env).
+### This workshop uses TESTNET for `development` because Trustless Work escrows
+### only exist on testnet/mainnet (there is no local Trustless Work), and it
+### means you don't need Docker. Everything here is free test money.
+###
+### Agents: read .agents/skills/scaffold-stellar/SKILL.md before editing this.
+### ─────────────────────────────────────────────────────────────────────────────
+
+### Development: your contracts are compiled, deployed to TESTNET and get a
+### generated TypeScript client every time you save (via `npm start`).
+[development.network]
+rpc-url = "https://soroban-testnet.stellar.org"
+network-passphrase = "Test SDF Network ; September 2015"
+
+[[development.accounts]]
+# Keys for this account are created (and funded by friendbot) automatically and
+# saved under app/.config/stellar/identity (gitignored). It's the deployer, NOT
+# your browser wallet.
+name = "me"
+default = true
+
+[development.contracts]
+# RentSafe: acuerdos de alquiler on-chain (admin = deployer `me`, resuelve disputas desde la CLI)
+rental_registry = { client = true, constructor_args = "--admin me" }
+# `client = true` means: build -> deploy -> generate a TS client you can import as
+#   import { reputation } from "@stellar-scaffold/app-lib/clients"
+# The key must be the snake_case version of the crate `name` in its Cargo.toml.
+reputation = { client = true }
+
+# OpenZeppelin examples that ship with Scaffold: compiled as references but NOT
+# deployed. Scaffold tries to deploy every crate in contracts/, so any contract you
+# don't want deployed must be listed with `client = false`.
+fungible_allowlist_example = { client = false }
+nft_enumerable_example = { client = false }
+# To deploy them (e.g. "mint an NFT badge when an escrow is released"), use instead:
+# fungible_allowlist_example = { client = true, constructor_args = "--name ExampleToken --symbol EXT --admin me --manager me --initial_supply 1000000000000000000000000" }
+# nft_enumerable_example = { client = true, constructor_args = "--uri https://example.com/nft/ --name ExampleNFT --symbol ENFT --owner me" }
+
+# Full syntax for a contract with a constructor and post-deploy calls:
+# [development.contracts.my_contract]
+# client = true
+# constructor_args = """
+# --admin me
+# """
+# # Each line is the part after `--` in `stellar contract invoke --id <this> --source me --`
+# after_deploy = """
+# set_fee --fee 100
+# """
+
+### Staging: same network (testnet) but meant for a shared, stable deployment.
+[staging.network]
+rpc-url = "https://soroban-testnet.stellar.org"
+network-passphrase = "Test SDF Network ; September 2015"
+
+[[staging.accounts]]
+name = "testnet-user"
+default = true
+
+[staging.contracts]
+rental_registry = { client = true, constructor_args = "--admin testnet-user" }
+reputation = { client = true }
+fungible_allowlist_example = { client = false }
+nft_enumerable_example = { client = false }
+
+### Production: mainnet. Real money. Contracts are referenced by id, not deployed
+### automatically. See .agents/skills/scaffold-stellar/references/deploy.md
+[production.network]
+# Pick a mainnet RPC provider: https://developers.stellar.org/docs/data/apis/rpc/providers
+rpc-url = "https://YOUR-MAINNET-RPC-PROVIDER"
+network-passphrase = "Public Global Stellar Network ; September 2015"
+
+[[production.accounts]]
+name = "official-team-account"
+default = true
+
+[production.contracts]
+# reputation = { id = "C..." }

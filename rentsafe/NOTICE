@@ -1,0 +1,30 @@
+Scaffold Pura Vida
+https://github.com/bitfalt/scaffold-stellar-agentic
+
+This project is built on Scaffold Stellar, by The Aha Company and the Scaffold
+Stellar contributors, licensed under the Apache License, Version 2.0:
+  - CLI:      https://github.com/stellar-scaffold/cli
+  - Template: https://github.com/stellar-scaffold/ui
+  - Docs:     https://stellarscaffold.org
+
+The project structure, the Vite/React app, app-lib (network, wallet, friendbot
+and event helpers), the contract-client generation workflow, the
+environments.toml configuration and the OpenZeppelin example contracts come
+from the Scaffold Stellar template. Files from the template were modified for
+this project, mainly to:
+  - target Stellar testnet in development instead of a local Docker network;
+  - remove the guess-the-number example and the template's CI, e2e and
+    contributor files;
+  - add Trustless Work escrows (app/src/trustless), Cavos embedded wallets
+    (app/src/cavos), a reputation contract (contracts/reputation), helper
+    scripts (scripts/) and agent skills (AGENTS.md, .agents/skills);
+  - fix the event subscription topic filter (app-lib/subscription.ts).
+
+Third-party material included in this repository:
+  - .agents/skills/trustless-work/references/official/: the official Trustless
+    Work agent skill, https://github.com/Trustless-Work/trustlesswork-skill,
+    Apache License 2.0 (see the LICENSE file in that folder).
+
+Main third-party dependencies (installed from npm / crates.io, not vendored):
+@trustless-work/escrow, @cavos/kit (MIT), @creit.tech/stellar-wallets-kit,
+@stellar/stellar-sdk, soroban-sdk and OpenZeppelin stellar-contracts.

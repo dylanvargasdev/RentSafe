@@ -1,0 +1,26 @@
+{
+	"$schema": "https://json.schemastore.org/claude-code-settings.json",
+	"permissions": {
+		"allow": [
+			"Bash(npm run *)",
+			"Bash(npm install)",
+			"Bash(cargo test *)",
+			"Bash(cargo build *)",
+			"Bash(stellar contract build *)",
+			"Bash(stellar scaffold build *)",
+			"Bash(stellar keys address *)",
+			"Bash(git status)",
+			"Bash(git diff *)",
+			"WebFetch(domain:developers.stellar.org)",
+			"WebFetch(domain:docs.trustlesswork.com)",
+			"WebFetch(domain:stellarscaffold.org)",
+			"WebFetch(domain:docs.rs)",
+			"WebFetch(domain:docs.openzeppelin.com)"
+		],
+		"deny": [
+			"Bash(stellar keys secret *)",
+			"Bash(stellar keys show *)",
+			"Read(./app/.config/stellar/identity/**)"
+		]
+	}
+}

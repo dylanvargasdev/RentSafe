@@ -1,0 +1,73 @@
+.summary {
+	display: grid;
+	gap: 2px;
+}
+.modes {
+	border: 0;
+	margin: 0;
+	padding: 0;
+	display: grid;
+	gap: 8px;
+}
+.modes legend {
+	margin-bottom: 8px;
+}
+.mode {
+	display: flex;
+	gap: 12px;
+	align-items: flex-start;
+	padding: 12px;
+	border: 1px solid var(--line);
+	border-radius: 12px;
+	cursor: pointer;
+}
+.mode span {
+	display: grid;
+	gap: 2px;
+}
+.mode input {
+	accent-color: var(--pine);
+	margin-top: 4px;
+	width: 18px;
+	height: 18px;
+}
+.modeOn {
+	border-color: var(--pine);
+	background: var(--pine-soft);
+}
+.checks {
+	list-style: none;
+	margin: 0;
+	padding: 0;
+	display: grid;
+	gap: 6px;
+	font-size: 0.85rem;
+}
+.checks li {
+	display: flex;
+	gap: 8px;
+	align-items: flex-start;
+}
+.checks svg {
+	flex-shrink: 0;
+	margin-top: 2px;
+}
+.ok {
+	color: var(--pine-strong);
+}
+.bad {
+	color: var(--coral);
+}
+.warn {
+	color: var(--amber);
+}
+.hint {
+	padding-left: 24px;
+	font-weight: 600;
+}
+.reqs {
+	margin: 6px 0 0;
+	padding-left: 20px;
+	color: var(--ink-2);
+	font-size: 0.9rem;
+}
