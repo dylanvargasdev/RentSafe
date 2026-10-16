@@ -1,3 +1,9 @@
+/**
+ * The four rental categories (lodging, vehicles, tech, work equipment) and
+ * what changes between them: date picker mode (date range vs start + amount),
+ * allowed price units and their labels, and the attribute labels used by
+ * the search filters and the listing page.
+ */
 import { type CategoryId, type PriceUnit } from "./types"
 
 export interface CategoryInfo {

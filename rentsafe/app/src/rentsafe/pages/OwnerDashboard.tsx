@@ -1,3 +1,12 @@
+/**
+ * Owner panel (`/propietario`): earnings summary (released, pending and held
+ * in escrow, from `bookingStatus.ts`) and four tabs: requests to answer,
+ * ongoing rentals, history and my listings.
+ *
+ * Shows bookings where the current user is the owner, including on-chain
+ * bookings imported by the chain sync (`SyncNote` shows its state). The
+ * header keeps a fixed layout so nothing moves when the sync runs.
+ */
 import { useMemo, useState } from "react"
 import { Link } from "react-router-dom"
 import { useWallet } from "../../hooks/useWallet"

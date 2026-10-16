@@ -1,3 +1,13 @@
+/**
+ * Listing tiles used in the home page, search results and favorites.
+ *
+ * - `ListingCard`: photo, title, price per unit, rating and "Destacado" badge
+ *   (rating and featured flag come from `pricing.ts`, derived from bookings
+ *   and reviews, never hard-coded).
+ * - `FavoriteButton`: heart toggle, stored locally; it stops the click so it
+ *   doesn't open the listing when it sits on top of the card.
+ * - `ListingCardSkeleton`: placeholder with the same size, to avoid layout jumps.
+ */
 import { Link } from "react-router-dom"
 import { unitLabel } from "../categories"
 import { money } from "../config"

@@ -86,25 +86,39 @@ pub enum Error {
     AlreadyReviewed = 17,
 }
 
+/// Estado de una reserva. Ver el ciclo de vida en la cabecera del módulo.
 #[contracttype]
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
 pub enum Status {
+    /// El arrendatario pidió el alquiler; falta la respuesta del propietario.
     Requested,
+    /// El propietario aceptó: las fechas quedan bloqueadas para ese bien.
     Accepted,
+    /// El propietario rechazó la solicitud (estado final).
     Rejected,
+    /// Una de las partes canceló antes de vincular un escrow (estado final).
     Cancelled,
+    /// El escrow de Trustless Work fue verificado y vinculado; custodia los fondos.
     EscrowLinked,
+    /// El escrow liberó los fondos y el propietario cerró la reserva (estado final).
     Completed,
+    /// Una parte abrió una disputa; decide el árbitro del escrow.
     Disputed,
+    /// El árbitro resolvió la disputa (estado final).
     Resolved,
 }
 
+/// Acuerdo de alquiler entre un arrendatario y un propietario.
 #[contracttype]
 #[derive(Clone, Debug, Eq, PartialEq)]
 pub struct Booking {
+    /// Identificador secuencial (0, 1, 2…).
     pub id: u32,
+    /// Identificador de la publicación en la app (no es un dato personal).
     pub listing_id: String,
+    /// Quien alquila y paga.
     pub tenant: Address,
+    /// Quien publica el bien y recibe el alquiler.
     pub owner: Address,
     /// Inicio y fin del alquiler (unix, segundos).
     pub start: u64,
@@ -114,27 +128,36 @@ pub struct Booking {
     pub deposit: i128,
     /// Comisión de la plataforma (hito propio del escrow, receptor = plataforma).
     pub fee: i128,
+    /// Estado actual de la reserva.
     pub status: Status,
     /// Escrow de Trustless Work que custodia los fondos (`C...`).
     pub escrow: Option<Address>,
     /// Árbitro de disputas, leído del escrow al vincularlo.
     pub arbiter: Option<Address>,
+    /// Momento de la solicitud y de la última transición (unix, segundos).
     pub created_at: u64,
     pub updated_at: u64,
 }
 
+/// Reseña verificada: solo la deja una parte de una reserva cerrada.
 #[contracttype]
 #[derive(Clone, Debug, Eq, PartialEq)]
 pub struct Review {
+    /// Reserva que respalda la reseña.
     pub booking_id: u32,
+    /// Quien escribe la reseña (arrendatario o propietario).
     pub reviewer: Address,
+    /// Quien la recibe (la otra parte).
     pub subject: Address,
     /// 1 a 5 estrellas.
     pub rating: u32,
+    /// Texto opcional, hasta `MAX_COMMENT_LEN` bytes.
     pub comment: String,
+    /// Momento de la reseña (unix, segundos).
     pub timestamp: u64,
 }
 
+/// Reputación acumulada de una billetera.
 #[contracttype]
 #[derive(Clone, Debug, Default, Eq, PartialEq)]
 pub struct Score {
@@ -144,12 +167,17 @@ pub struct Score {
     pub total: u32,
 }
 
+/// Claves de almacenamiento. `Admin`, `Token` y `Counter` van en instance;
+/// el resto en persistent, con TTL extendido en cada escritura.
 #[contracttype]
 enum DataKey {
+    /// Puede actualizar el código y resolver disputas.
     Admin,
     /// Contrato del activo que deben usar los escrows (USDC).
     Token,
+    /// Próximo id de reserva.
     Counter,
+    /// id -> reserva
     Booking(u32),
     /// listing_id -> ids de reservas aceptadas y abiertas (para evitar solapes)
     Active(String),
@@ -165,6 +193,7 @@ enum DataKey {
     Score(Address),
 }
 
+/// Se emite en cada cambio de estado de una reserva (incluida su creación).
 #[contractevent]
 #[derive(Clone, Debug, Eq, PartialEq)]
 pub struct BookingUpdated {
@@ -175,6 +204,7 @@ pub struct BookingUpdated {
     pub owner: Address,
 }
 
+/// Se emite al publicar una reseña; el tema permite filtrar por billetera reseñada.
 #[contractevent]
 #[derive(Clone, Debug, Eq, PartialEq)]
 pub struct ReviewPosted {
@@ -189,12 +219,14 @@ pub struct ReviewPosted {
 #[contract]
 pub struct RentalRegistry;
 
+/// Extiende el TTL de una clave persistente para que no expire (~60 días).
 fn bump<K: IntoVal<Env, Val>>(env: &Env, key: &K) {
     env.storage()
         .persistent()
         .extend_ttl(key, TTL_THRESHOLD, TTL_EXTEND_TO);
 }
 
+/// Lee una reserva o devuelve `NotFound`.
 fn load(env: &Env, id: u32) -> Result<Booking, Error> {
     env.storage()
         .persistent()
@@ -202,6 +234,7 @@ fn load(env: &Env, id: u32) -> Result<Booking, Error> {
         .ok_or(Error::NotFound)
 }
 
+/// Guarda la reserva, sella `updated_at`, extiende TTLs y emite `BookingUpdated`.
 fn save(env: &Env, booking: &mut Booking) {
     booking.updated_at = env.ledger().timestamp();
     let key = DataKey::Booking(booking.id);
@@ -219,6 +252,7 @@ fn save(env: &Env, booking: &mut Booking) {
     .publish(env);
 }
 
+/// Reservas aceptadas y abiertas de una publicación (para detectar solapes).
 fn active_of(env: &Env, listing_id: &String) -> Vec<u32> {
     env.storage()
         .persistent()
@@ -226,12 +260,14 @@ fn active_of(env: &Env, listing_id: &String) -> Vec<u32> {
         .unwrap_or(Vec::new(env))
 }
 
+/// Sobrescribe la lista de reservas activas de una publicación.
 fn set_active(env: &Env, listing_id: &String, ids: &Vec<u32>) {
     let key = DataKey::Active(listing_id.clone());
     env.storage().persistent().set(&key, ids);
     bump(env, &key);
 }
 
+/// Quita la reserva de la lista de activas de su publicación (al cerrarse).
 fn remove_active(env: &Env, booking: &Booking) {
     let ids = active_of(env, &booking.listing_id);
     let mut kept = Vec::new(env);
@@ -243,6 +279,8 @@ fn remove_active(env: &Env, booking: &Booking) {
     set_active(env, &booking.listing_id, &kept);
 }
 
+/// Añade la reserva al índice de una billetera, descartando la más antigua
+/// si se supera `MAX_BOOKINGS_PER_ADDRESS`.
 fn index_for(env: &Env, who: &Address, id: u32) {
     let key = DataKey::ByAddress(who.clone());
     let mut ids: Vec<u32> = env
@@ -277,8 +315,10 @@ fn require_party(caller: &Address, booking: &Booking) -> Result<(), Error> {
 //   milestones: Vec<{ amount: i128, receiver: Address, .. }>
 //   trustline { address }
 
+/// Campos de un struct del escrow, decodificado como mapa genérico.
 type Fields = Map<Symbol, Val>;
 
+/// Lee y convierte un campo del escrow; si falta o no encaja, `EscrowUnreadable`.
 fn field<T: TryFromVal<Env, Val>>(env: &Env, map: &Fields, name: &str) -> Result<T, Error> {
     let v = map
         .get(Symbol::new(env, name))
@@ -286,6 +326,7 @@ fn field<T: TryFromVal<Env, Val>>(env: &Env, map: &Fields, name: &str) -> Result
     T::try_from_val(env, &v).map_err(|_| Error::EscrowUnreadable)
 }
 
+/// Llama a `get_escrow` del contrato de Trustless Work sin abortar si falla.
 fn read_escrow(env: &Env, escrow: &Address) -> Result<Fields, Error> {
     let res = env.try_invoke_contract::<Val, soroban_sdk::Error>(
         escrow,
@@ -357,6 +398,9 @@ fn verify_escrow(env: &Env, booking: &Booking, escrow: &Address) -> Result<Addre
 
 #[contractimpl]
 impl RentalRegistry {
+    /// Inicializa el registro (se ejecuta una sola vez, al desplegar).
+    ///
+    /// `admin`: puede actualizar el contrato y resolver disputas.
     /// `token`: contrato del activo que custodian los escrows (USDC en testnet:
     /// `CBIELTK6YBZJU5UP2WWQEUCYKLPU6AUNZ2BQ4WWFEIE3USCIHMXQDAMA`).
     pub fn __constructor(env: Env, admin: Address, token: Address) {
@@ -365,6 +409,10 @@ impl RentalRegistry {
     }
 
     /// El arrendatario solicita alquilar `listing_id` del `owner` en un período.
+    ///
+    /// Fechas en unix (segundos); importes en unidades de 7 decimales. La
+    /// comisión puede ser 0. Devuelve el id de la nueva reserva. Aún no bloquea
+    /// fechas: el solape se comprueba al aceptar.
     #[allow(clippy::too_many_arguments)]
     pub fn request(
         env: Env,
@@ -548,6 +596,7 @@ impl RentalRegistry {
 
     /// Una parte reseña a la otra tras una reserva cerrada (completada o con
     /// disputa resuelta). Una reseña por parte y reserva.
+    /// `rating` de 1 a 5; actualiza la puntuación de la otra parte.
     pub fn review(
         env: Env,
         reviewer: Address,
@@ -622,6 +671,7 @@ impl RentalRegistry {
 
     // ── Lecturas ────────────────────────────────────────────────────────────
 
+    /// Una reserva por su id (`NotFound` si no existe).
     pub fn get_booking(env: Env, id: u32) -> Result<Booking, Error> {
         load(&env, id)
     }
@@ -645,6 +695,7 @@ impl RentalRegistry {
         env.storage().persistent().get(&DataKey::Escrow(escrow))
     }
 
+    /// Reseña que `reviewer` dejó sobre la reserva `id`, si existe.
     pub fn get_review(env: Env, id: u32, reviewer: Address) -> Option<Review> {
         env.storage()
             .persistent()
@@ -667,10 +718,12 @@ impl RentalRegistry {
             .unwrap_or_default()
     }
 
+    /// Contrato del activo que deben custodiar los escrows (USDC).
     pub fn token(env: Env) -> Address {
         env.storage().instance().get(&DataKey::Token).unwrap()
     }
 
+    /// Número total de reservas creadas (= próximo id).
     pub fn count(env: Env) -> u32 {
         env.storage().instance().get(&DataKey::Counter).unwrap_or(0)
     }

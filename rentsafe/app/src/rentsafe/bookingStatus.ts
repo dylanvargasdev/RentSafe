@@ -1,3 +1,13 @@
+/**
+ * Presentation of the booking lifecycle (the states themselves are in
+ * `types.ts`; transitions in `chain/useBookingFlow.ts`).
+ *
+ * - `STATUS` / `MODE`: label, badge tone and one-line help for each state and
+ *   for "on-chain" vs "demo" bookings.
+ * - `TIMELINE`: the steps shown on the booking page and when each is reached.
+ * - `heldInEscrow`, `ownerEarned`, `ownerPending`: money figures for the
+ *   dashboards, derived only from the booking's recorded state.
+ */
 import { type Booking, type BookingMode, type BookingStatus } from "./types"
 
 export type Tone = "neutral" | "info" | "success" | "warning" | "danger"

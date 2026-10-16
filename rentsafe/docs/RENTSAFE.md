@@ -42,9 +42,22 @@ app/src/rentsafe/
   chain/useBookingFlow.ts   Orquestador de transiciones: escrow + registro + simulación
   chain/useChainSync.ts     Lee las reservas on-chain de la billetera y las importa/actualiza
   chain/readiness.ts  Requisitos del modo on-chain
-  components/, pages/, styles/
-contracts/rental-registry/  Contrato Soroban (Rust) + tests
+  chain/syncContext.ts      Comparte el estado de la sincronización con la UI
+  dates.ts            Fechas locales (YYYY-MM-DD) ↔ unix, formato en español
+  components/         UI reutilizable: ui.tsx (primitivas), RequestDialog,
+                      BookingActions, FundsFlow, TxHistory, OnchainReviews, SyncNote…
+  pages/              Una página por ruta (inicio, búsqueda, bien, reserva,
+                      panel de propietario, árbitro, perfil, cuenta, informativas)
+  styles/             Tokens y clases globales `rs-*`
+contracts/rental-registry/  Contrato Soroban (Rust) + 13 tests unitarios
+tests/escrow-e2e/     Tests de integración: registro + escrow real de Trustless Work
+scripts/contracts-e2e.mjs   Ejecuta esos tests (`npm run contracts:e2e`)
+scripts/diagnose.mjs        Diagnóstico local → diagnostico.log (`npm run diagnose`)
 ```
+
+Cada archivo de `app/src/rentsafe/` empieza con un comentario que explica su
+papel; el contrato documenta cada función pública, tipo y error con `///`
+(`cargo doc -p rental-registry --open`).
 
 Toda firma pasa por `useWallet().signTransaction` (Cavos o extensión). Las
 escrituras del escrow pasan por `useEscrowTx().run()` del scaffold.
