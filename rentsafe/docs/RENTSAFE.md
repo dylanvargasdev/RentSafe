@@ -9,21 +9,21 @@ Cavos). Todo funciona en **Stellar testnet**.
 
 ## 1. Qué hay implementado
 
-| Área                                                                                                                                                    | Estado                                                                               |
-| ------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------ |
-| Inicio con buscador, destacados, populares, alquilados recientemente, cómo funciona, protección del depósito, CTA a propietarios, footer                | Hecho                                                                                |
-| Cuatro categorías con vista propia y filtros específicos por categoría                                                                                  | Hecho                                                                                |
-| Buscador y filtros (ubicación, fechas, categoría, precio, disponibilidad, orden y atributos) que filtran de verdad y viven en la URL                    | Hecho                                                                                |
-| Detalle con galería, características, requisitos, disponibilidad, perfil del propietario, reseñas y cálculo dinámico del coste                          | Hecho                                                                                |
-| Cuenta RentSafe (registro, inicio de sesión, perfil) separada de la billetera                                                                           | Hecho (local, ver §6)                                                                |
-| Arrendatario: solicitar, depositar, confirmar entrega, pedir el depósito, disputar (daños o bien no entregado), historial y reseñas                     | Hecho                                                                                |
-| Propietario: panel con cifras derivadas de las reservas, solicitudes, aceptar/rechazar, publicar/editar con fotos, pausar, cobrar, registrar devolución | Hecho                                                                                |
-| Árbitro de la plataforma: página `/arbitro` con las disputas de su billetera                                                                            | Hecho                                                                                |
-| Escrow Trustless Work multi-release (alquiler, depósito y comisión como hitos)                                                                          | Implementado; flujo completo pendiente de probar en testnet (§5)                     |
-| Contrato Soroban `rental_registry`: acuerdo, anti-solapes, verificación del escrow, índice por billetera, reseñas verificadas + 13 tests                | Tests pasan; desplegado en testnet (la versión nueva se redespliega con `npm start`) |
-| Sincronización de reservas on-chain entre navegadores (`useChainSync`)                                                                                  | Hecho                                                                                |
-| Cavos (correo/Google) y extensiones (Freighter) vía `useWallet()`                                                                                       | Cableado del scaffold, con UI en español                                             |
-| Modo simulación claramente etiquetado (refs `SIM-…`)                                                                                                    | Hecho y probado de punta a punta                                                     |
+| Área                                                                                                                                                    | Estado                                                                             |
+| ------------------------------------------------------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------- |
+| Inicio con buscador, destacados, populares, alquilados recientemente, cómo funciona, protección del depósito, CTA a propietarios, footer                | Hecho                                                                              |
+| Cuatro categorías con vista propia y filtros específicos por categoría                                                                                  | Hecho                                                                              |
+| Buscador y filtros (ubicación, fechas, categoría, precio, disponibilidad, orden y atributos) que filtran de verdad y viven en la URL                    | Hecho                                                                              |
+| Detalle con galería, características, requisitos, disponibilidad, perfil del propietario, reseñas y cálculo dinámico del coste                          | Hecho                                                                              |
+| Cuenta RentSafe (registro, inicio de sesión, perfil) separada de la billetera                                                                           | Hecho (local, ver §6)                                                              |
+| Arrendatario: solicitar, depositar, confirmar entrega, pedir el depósito, disputar (daños o bien no entregado), historial y reseñas                     | Hecho                                                                              |
+| Propietario: panel con cifras derivadas de las reservas, solicitudes, aceptar/rechazar, publicar/editar con fotos, pausar, cobrar, registrar devolución | Hecho                                                                              |
+| Árbitro de la plataforma: página `/arbitro` con las disputas de su billetera                                                                            | Hecho                                                                              |
+| Escrow Trustless Work multi-release (alquiler, depósito y comisión como hitos)                                                                          | Implementado; flujo completo pendiente de probar en testnet (§5)                   |
+| Contrato Soroban `rental_registry`: acuerdo, anti-solapes, verificación del escrow, índice por billetera, reseñas verificadas + 13 tests                | Tests pasan; desplegado en testnet (`CBVY…`, fijado por id en `environments.toml`) |
+| Sincronización de reservas on-chain entre navegadores (`useChainSync`)                                                                                  | Hecho                                                                              |
+| Cavos (correo/Google) y extensiones (Freighter) vía `useWallet()`                                                                                       | Cableado del scaffold, con UI en español                                           |
+| Modo simulación claramente etiquetado (refs `SIM-…`)                                                                                                    | Hecho y probado de punta a punta                                                   |
 
 ## 2. Arquitectura
 
@@ -190,8 +190,7 @@ Se necesitan tres billeteras porque el contrato no acepta que una parte sea
 
 1. Configura en `app/.env`: `PUBLIC_TRUSTLESS_WORK_API_KEY`,
    `PUBLIC_CAVOS_APP_ID`, `PUBLIC_DEMO_OWNER_ADDRESS` = Freighter cuenta 1 y
-   `PUBLIC_PLATFORM_ADDRESS` = Freighter cuenta 2. Reinicia `npm start`
-   (redespliega `rental_registry`).
+   `PUBLIC_PLATFORM_ADDRESS` = Freighter cuenta 2. Reinicia `npm start`.
 2. Crea tu cuenta RentSafe en `/entrar`.
 3. Conecta Cavos ("Con correo o Google"). En **Perfil y billetera**: activar con
    Friendbot → habilitar USDC → cambiar 500 XLM por USDC.
@@ -235,9 +234,11 @@ Se necesitan tres billeteras porque el contrato no acepta que una parte sea
   por bien no entregado resuelta por el árbitro. Los saldos cuadran (0,3% de
   Trustless Work por liberación). Falta solo la prueba con la interfaz de las
   billeteras (Cavos y Freighter).
-- Al cambiar el contrato, `npm start` lo redespliega con un id nuevo: las
-  reservas on-chain anteriores quedan en el contrato viejo. La clave de
-  localStorage pasó a `rentsafe:v2` para empezar limpio.
+- `rental_registry` está fijado por id (`environments.toml`): `npm start` no lo
+  redespliega. Para probar cambios del contrato hay que desplegar una copia
+  propia (instrucciones en ese archivo); tendrá un id nuevo y las reservas
+  on-chain anteriores quedan en el contrato viejo. La clave de localStorage pasó
+  a `rentsafe:v2` para empezar limpio.
 - `CAVOS_APP_SALT` ahora es `"rentsafe"`: las billeteras Cavos de testnet
   creadas antes son otras billeteras. No vuelvas a cambiarlo con usuarios
   reales.

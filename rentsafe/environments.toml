@@ -23,10 +23,15 @@ name = "me"
 default = true
 
 [development.contracts]
-# RentSafe: acuerdos de alquiler on-chain. admin = deployer `me` (puede actualizar
-# el contrato y resolver disputas como respaldo). token = USDC de testnet (SAC del
-# emisor GBBD47…FLA5): los escrows vinculados deben custodiar este activo.
-rental_registry = { client = true, constructor_args = "--admin me --token CBIELTK6YBZJU5UP2WWQEUCYKLPU6AUNZ2BQ4WWFEIE3USCIHMXQDAMA" }
+# RentSafe: acuerdos de alquiler on-chain. Fijado por `id` al contrato de la
+# demo (el del README, con las reservas verificadas en testnet): `npm start` solo
+# genera su cliente y NO despliega ni actualiza nada, así el id no cambia.
+#
+# Para desplegar una copia propia (admin = deployer `me`; token = USDC de
+# testnet, SAC del emisor GBBD47…FLA5), cambia la línea por:
+# rental_registry = { client = true, constructor_args = "--admin me --token CBIELTK6YBZJU5UP2WWQEUCYKLPU6AUNZ2BQ4WWFEIE3USCIHMXQDAMA" }
+# y actualiza el id del README.
+rental_registry = { client = true, id = "CBVYTPTWBERGUWRVS4CGRFEXDLH6437XQFRT76UAHEE2OTYLW5I4GLUN" }
 # `client = true` means: build -> deploy -> generate a TS client you can import as
 #   import { rentalRegistry } from "@stellar-scaffold/app-lib/clients"
 # The key must be the snake_case version of the crate `name` in its Cargo.toml.
