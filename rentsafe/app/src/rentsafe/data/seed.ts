@@ -14,8 +14,10 @@ import {
 /** The signed-in user of this browser (single local account in the MVP). */
 export const ME = "u-me"
 
-const img = (id: string) =>
+/** Unsplash photo URL from its id (the part after `photo-`). */
+export const photoUrl = (id: string) =>
 	`https://images.unsplash.com/photo-${id}?auto=format&fit=crop&w=1200&q=75`
+const img = photoUrl
 
 export const SEED_OWNERS: Owner[] = [
 	{
@@ -121,7 +123,7 @@ export const SEED_LISTINGS: Listing[] = [
 		images: [
 			img("1522708323590-d24dbb6b0267"),
 			img("1502672260266-1c1ef2d93688"),
-			img("1493809842364-78817add7ffb"),
+			img("1776363116182-51694a04a1d5"),
 		],
 		ownerId: "u-lucia",
 		features: [
@@ -173,8 +175,8 @@ export const SEED_LISTINGS: Listing[] = [
 		deposit: 250,
 		images: [
 			img("1499793983690-e29da59ef1c2"),
-			img("1510798831971-661eb04b3739"),
-			img("1505693416388-ac5ce068fe85"),
+			img("1710563138874-4bac91c14e51"),
+			img("1729479929945-476781fcb8a7"),
 		],
 		ownerId: "u-diego",
 		features: [
@@ -227,6 +229,7 @@ export const SEED_LISTINGS: Listing[] = [
 		unit: "noche",
 		deposit: 60,
 		images: [
+			img("1745208746272-8d3b979d5f92"),
 			img("1505691938895-1758d7feb511"),
 			img("1540518614846-7eded433c457"),
 		],
@@ -256,7 +259,7 @@ export const SEED_LISTINGS: Listing[] = [
 		unit: "semana",
 		deposit: 400,
 		images: [
-			img("1568605114967-8130f3a36994"),
+			img("1636301587190-88cbb412fea0"),
 			img("1512917774080-9991f1c4c750"),
 			img("1564013799919-ab600027ffc6"),
 		],
@@ -319,7 +322,10 @@ export const SEED_LISTINGS: Listing[] = [
 		unit: "dia",
 		minUnits: 2,
 		deposit: 300,
-		images: [img("1549317661-bd32c8ce0db2"), img("1533473359331-0135ef1b58bf")],
+		images: [
+			img("1786405454372-3fe75969c6b9"),
+			img("1533473359331-0135ef1b58bf"),
+		],
 		ownerId: "u-mateo",
 		features: ["4x4", "Aire acondicionado", "Seguro básico", "Bluetooth"],
 		requirements: [
@@ -347,7 +353,7 @@ export const SEED_LISTINGS: Listing[] = [
 		...base,
 		id: "veh-moto-tamarindo",
 		category: "vehiculos",
-		title: "Moto 150cc para recorrer la costa",
+		title: "Moto clásica para recorrer la costa",
 		description:
 			"Moto ágil y económica, con dos cascos incluidos y baúl trasero. La forma más práctica de moverse entre playas.",
 		location: "Tamarindo, Guanacaste",
@@ -355,7 +361,7 @@ export const SEED_LISTINGS: Listing[] = [
 		price: 28,
 		unit: "dia",
 		deposit: 120,
-		images: [img("1558981806-ec527fa84c39"), img("1568772585407-9361f9bf3a87")],
+		images: [img("1558981806-ec527fa84c39"), img("1694612976980-7d2384636cd1")],
 		ownerId: "u-diego",
 		features: ["2 cascos", "Baúl trasero", "Bajo consumo"],
 		requirements: ["Licencia de moto vigente", "Edad mínima 21 años"],
@@ -380,8 +386,8 @@ export const SEED_LISTINGS: Listing[] = [
 		minUnits: 2,
 		deposit: 50,
 		images: [
-			img("1485965120184-e220f721d03e"),
-			img("1532298229144-0ec0c57515c7"),
+			img("1575734124434-aeabcbd508b3"),
+			img("1785711922027-564ddf74a283"),
 		],
 		ownerId: "u-sofia",
 		features: ["Casco", "Candado", "Luces", "Mapa de rutas"],
@@ -401,7 +407,10 @@ export const SEED_LISTINGS: Listing[] = [
 		price: 45,
 		unit: "dia",
 		deposit: 250,
-		images: [img("1503376780353-7e6692767b70")],
+		images: [
+			img("1638618164682-12b986ec2a75"),
+			img("1623869675781-80aa31012a5a"),
+		],
 		ownerId: "u-mateo",
 		features: ["Híbrido", "CarPlay", "Cámara de reversa", "Seguro básico"],
 		requirements: ["Licencia vigente", "Edad mínima 25 años"],
@@ -427,7 +436,10 @@ export const SEED_LISTINGS: Listing[] = [
 		price: 14,
 		unit: "dia",
 		deposit: 80,
-		images: [img("1604868189265-219ba7bf7ea3")],
+		images: [
+			img("1597260491619-bab87197869f"),
+			img("1611956292173-c2445aa61709"),
+		],
 		ownerId: ME,
 		features: ["40 km de autonomía", "Cargador", "Casco"],
 		requirements: ["Identificación válida", "Edad mínima 18 años"],
@@ -485,7 +497,7 @@ export const SEED_LISTINGS: Listing[] = [
 		deposit: 900,
 		images: [
 			img("1516035069371-29a1b244cc32"),
-			img("1502920917128-1aa500764cbd"),
+			img("1538531048068-aef582996426"),
 		],
 		ownerId: "u-andrea",
 		features: ["Lente 24-70 f/2.8", "2 baterías", "Tarjeta 128 GB", "Bolso"],
@@ -600,7 +612,10 @@ export const SEED_LISTINGS: Listing[] = [
 		price: 85,
 		unit: "semana",
 		deposit: 250,
-		images: [img("1541888946425-d81bb19240f5")],
+		images: [
+			img("1649320316177-775fe2d67ca3"),
+			img("1765706845871-951abd038627"),
+		],
 		ownerId: "u-ferreteria",
 		features: ["6 m de altura", "Barandas", "Ruedas con freno"],
 		requirements: [
@@ -622,7 +637,7 @@ export const SEED_LISTINGS: Listing[] = [
 		price: 32,
 		unit: "dia",
 		deposit: 150,
-		images: [img("1581092160562-40aa08e78837")],
+		images: [img("1782235869457-069673be2dc3")],
 		ownerId: "u-ferreteria",
 		features: ["3000 PSI", "Manguera 15 m", "3 boquillas"],
 		requirements: ["Identificación válida", "Devolver limpia"],
@@ -641,7 +656,7 @@ export const SEED_LISTINGS: Listing[] = [
 		price: 20,
 		unit: "dia",
 		deposit: 100,
-		images: [img("1558904541-efa843a96f01")],
+		images: [img("1590820292118-e256c3ac2676")],
 		ownerId: "u-mateo",
 		features: ["Autopropulsada", "Bolsa recolectora", "Altura ajustable"],
 		requirements: ["Identificación válida"],
@@ -661,7 +676,10 @@ export const SEED_LISTINGS: Listing[] = [
 		price: 26,
 		unit: "dia",
 		deposit: 200,
-		images: [img("1621905251189-08b45d6a269e")],
+		images: [
+			img("1588415796310-b9a124beabb0"),
+			img("1770822662967-7f66605f9103"),
+		],
 		ownerId: ME,
 		features: ["150 litros", "Motor eléctrico", "Ruedas"],
 		requirements: ["Identificación válida", "Transporte por cuenta propia"],
