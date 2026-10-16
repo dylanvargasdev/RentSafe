@@ -165,6 +165,23 @@ npm run contracts:e2e      # registro + escrow real de Trustless Work (descarga 
 npm start                  # http://localhost:5173
 ```
 
+### Publicar la demo en la web (Vercel)
+
+La app es una página estática y el contrato está fijado por id, así que el
+cliente generado (`app-lib/clients/`) va en el repo y el hosting compila solo
+con Node, sin Rust ni Stellar CLI. `vercel.json` define la instalación, el
+build, la carpeta de salida (`app/dist`) y la regla para que cualquier ruta
+cargue `index.html`.
+
+1. En Vercel: importar el repo y poner **Root Directory** = `rentsafe`.
+2. Copiar las variables `PUBLIC_*` de `app/.env` en _Settings → Environment
+   Variables_ (usar una API key de Trustless Work exclusiva para la demo: va
+   dentro de la página y cualquiera puede verla).
+3. En el panel de Cavos, agregar el dominio publicado a los orígenes permitidos
+   y a las Callback URLs de Google.
+
+Cada fusión en `main` vuelve a publicar la página.
+
 ## 4. Variables de entorno (`app/.env`, todas públicas por diseño)
 
 | Variable                        | Para qué                                                                                                                                      |
