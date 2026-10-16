@@ -38,6 +38,13 @@ lerna-debug.log*
 # generated contract bindings + clients (Binding packages and flattened index.ts)
 app-lib/clients/*
 !app-lib/clients/.gitkeep
+# RentSafe is pinned to one testnet contract (environments.toml `id`), so its
+# client is committed: the web host builds the app without Rust or the
+# Stellar CLI. `npm start` regenerates the same files from that contract.
+!app-lib/clients/index.ts
+!app-lib/clients/rental_registry/
+app-lib/clients/rental_registry/dist/
+app-lib/clients/rental_registry/node_modules/
 
 # Agent harness local-only state (skills and shared config ARE committed)
 .claude/settings.local.json

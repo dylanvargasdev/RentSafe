@@ -1,0 +1,7 @@
+{
+	"$schema": "https://openapi.vercel.sh/vercel.json",
+	"installCommand": "npm install --no-audit --no-fund",
+	"buildCommand": "npm run build --workspace rental_registry && npm run build",
+	"outputDirectory": "app/dist",
+	"rewrites": [{ "source": "/(.*)", "destination": "/index.html" }]
+}

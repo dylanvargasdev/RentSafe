@@ -237,10 +237,12 @@ export const RequestDialog = ({
 					checked={accepted}
 					onChange={(e) => setAccepted(e.target.checked)}
 				/>
-				Acepto los requisitos y las{" "}
-				<Link to="/legal/cancelaciones" target="_blank">
-					reglas de cancelación y disputas
-				</Link>
+				<span>
+					Acepto los requisitos y las{" "}
+					<Link to="/legal/cancelaciones" target="_blank">
+						reglas de cancelación y disputas
+					</Link>
+				</span>
 			</label>
 			{error && (
 				<Callout tone="danger" icon="alert">

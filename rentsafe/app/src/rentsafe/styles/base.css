@@ -290,6 +290,7 @@ button {
 	cursor: pointer;
 }
 .check input {
+	flex: none;
 	width: 18px;
 	height: 18px;
 	accent-color: var(--pine);
