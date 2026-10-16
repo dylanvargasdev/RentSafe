@@ -1,3 +1,13 @@
+/**
+ * Listing detail (`/bien/:id`): gallery, owner card with on-chain wallet
+ * reputation, description, attributes, conditions, availability and reviews.
+ *
+ * `BookingWidget` (the sticky side box) picks dates or amount, defaults to the
+ * first free period (`firstFreeStart`), shows the cost breakdown and opens
+ * `RequestDialog`, which sends the on-chain request. It blocks paused
+ * listings, the user's own listings and periods that overlap an accepted
+ * booking; visitors without a session are sent to `/entrar` first.
+ */
 import { useMemo, useState } from "react"
 import { Link, useLocation, useNavigate, useParams } from "react-router-dom"
 import { ATTRIBUTE_LABELS, categoryById, unitLabel } from "../categories"

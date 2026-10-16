@@ -1,3 +1,13 @@
+/**
+ * Booking detail (`/reservas/:id`), for both tenant and owner.
+ *
+ * Shows the timeline, where the money is right now (`FundsFlow`), the next
+ * action for the current user (`BookingActions`, which runs the on-chain
+ * steps), the operation history with explorer links, the cost summary and
+ * verifiable references (registry booking id, escrow contract). Once an
+ * on-chain booking is completed or resolved, each party can leave an
+ * on-chain review.
+ */
 import { Link, useParams } from "react-router-dom"
 import { escrowViewerUrl } from "../../trustless/config"
 import { STATUS, TIMELINE } from "../bookingStatus"

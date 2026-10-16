@@ -1,3 +1,10 @@
+/**
+ * Top bar: logo, search box, category nav, account menu and wallet menu.
+ *
+ * The account menu adds "Panel de árbitro" only when the connected wallet is
+ * the platform address (`PUBLIC_TRUSTLESS_PLATFORM_ADDRESS`), which is also
+ * the dispute resolver of every escrow. `Logo` is reused by the footer.
+ */
 import { useEffect, useRef, useState, type FormEvent } from "react"
 import { Link, NavLink, useLocation, useNavigate } from "react-router-dom"
 import { useWallet } from "../../hooks/useWallet"

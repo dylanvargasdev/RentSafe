@@ -99,6 +99,10 @@ config dir). On a fresh clone, run `npm run contracts:build` once before
 ## Layout
 
 ```
+contracts/rental-registry/  RentSafe: bookings registry + escrow verification + reviews
+app/src/rentsafe/         RentSafe app (pages, components, store, chain/ = on-chain flow)
+docs/RENTSAFE.md          RentSafe technical guide (architecture, escrow, lifecycle, testnet)
+tests/escrow-e2e/         registry + real Trustless Work escrow integration tests
 contracts/reputation/     example Soroban contract (reviews tied to escrows) + tests
 contracts/fungible-allowlist, nft-enumerable/   OpenZeppelin examples (not deployed by default)
 environments.toml         contracts per environment (development = testnet)

@@ -1,3 +1,9 @@
+/**
+ * Landing page (`/`): hero with search, category shortcuts, featured,
+ * popular and recently rented listings (all derived from the store's
+ * bookings and reviews), how it works, how the deposit is protected, and a
+ * call to action for owners.
+ */
 import { useMemo } from "react"
 import { Link } from "react-router-dom"
 import { CATEGORIES } from "../categories"

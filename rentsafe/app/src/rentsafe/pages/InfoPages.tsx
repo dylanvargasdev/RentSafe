@@ -1,3 +1,9 @@
+/**
+ * Static pages: "Cómo funciona" (`/como-funciona`, with the state glossary
+ * and the escrow money flow; supports `#anchor` links), legal pages
+ * (`/legal/terminos`, `/legal/privacidad`, `/legal/cancelaciones`) and the
+ * 404 page.
+ */
 import { useEffect } from "react"
 import { Link, useLocation, useParams } from "react-router-dom"
 import { platformAddress } from "../../trustless/config"

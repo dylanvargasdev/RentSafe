@@ -1,3 +1,7 @@
+/**
+ * Site footer: brand blurb, links to every category, help pages
+ * ("Cómo funciona", legal) and the testnet disclaimer. Purely presentational.
+ */
 import { Link } from "react-router-dom"
 import { CATEGORIES } from "../categories"
 import styles from "./Footer.module.css"

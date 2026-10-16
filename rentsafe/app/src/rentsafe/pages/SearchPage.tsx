@@ -1,3 +1,10 @@
+/**
+ * Search results (`/buscar?…`) and category pages (`/c/:category`).
+ *
+ * Filters are read from the URL (`search.ts` parses and applies them), so
+ * every search is shareable and the back button works. A category route
+ * fixes the category filter; an unknown category shows an empty state.
+ */
 import { useMemo } from "react"
 import { Link, useParams, useSearchParams } from "react-router-dom"
 import { categoryById, isCategoryId } from "../categories"

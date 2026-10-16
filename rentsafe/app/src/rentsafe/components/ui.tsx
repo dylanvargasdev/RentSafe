@@ -1,3 +1,12 @@
+/**
+ * Small design-system primitives shared by every RentSafe page: badges
+ * (generic, booking status, booking mode), buttons with a busy state, callouts,
+ * empty states, avatars, ratings, photos with fallback, the modal `Dialog` and
+ * the back link.
+ *
+ * Styles live in `styles/base.css` (global `rs-*` classes and tokens), so
+ * these components stay markup-only.
+ */
 import { useEffect, useRef, useState, type ReactNode } from "react"
 import { Link } from "react-router-dom"
 import { MODE, STATUS, type Tone } from "../bookingStatus"
