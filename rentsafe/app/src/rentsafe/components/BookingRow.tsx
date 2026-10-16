@@ -3,8 +3,8 @@ import { money } from "../config"
 import { formatRange } from "../dates"
 import { ownerById, useRentSafe } from "../store/useRentSafe"
 import { type Booking } from "../types"
-import { ModeBadge, Photo, StatusBadge } from "./ui"
 import styles from "./BookingRow.module.css"
+import { ModeBadge, Photo, StatusBadge } from "./ui"
 
 /** Compact booking card used by "Mis reservas" and the owner dashboard. */
 export const BookingRow = ({
@@ -34,7 +34,7 @@ export const BookingRow = ({
 			</div>
 			<div className={styles.main}>
 				<strong className={styles.title}>
-					{listing?.title ?? "Bien eliminado"}
+					{listing?.title ?? `Publicación ${booking.listingId}`}
 				</strong>
 				<span className="small muted">
 					{formatRange(booking.start, booking.end)} ·{" "}

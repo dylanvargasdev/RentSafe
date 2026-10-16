@@ -9,7 +9,7 @@ export const toISO = (d: Date) => {
 
 export const parseISO = (s: string) => {
 	const [y, m, d] = s.split("-").map(Number)
-	return new Date(y, (m ?? 1) - 1, d ?? 1)
+	return new Date(y ?? 1970, (m ?? 1) - 1, d ?? 1)
 }
 
 export const today = () => toISO(new Date())
@@ -50,3 +50,7 @@ export const formatDateTime = (iso: string) =>
 /** Unix seconds at local midnight (for the on-chain registry). */
 export const toUnix = (s: string) =>
 	BigInt(Math.floor(parseISO(s).getTime() / 1000))
+
+/** Inverse of `toUnix`: unix seconds → local ISO date. */
+export const fromUnix = (secs: bigint | number) =>
+	toISO(new Date(Number(secs) * 1000))

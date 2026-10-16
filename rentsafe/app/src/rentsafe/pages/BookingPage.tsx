@@ -2,11 +2,12 @@ import { Link, useParams } from "react-router-dom"
 import { escrowViewerUrl } from "../../trustless/config"
 import { STATUS, TIMELINE } from "../bookingStatus"
 import { unitLabel } from "../categories"
-import { formatDateLong } from "../dates"
+import { registryContractId } from "../chain/registry"
 import { BookingActions } from "../components/BookingActions"
 import { CostSummary } from "../components/CostSummary"
 import { FundsFlow } from "../components/FundsFlow"
 import { Icon } from "../components/Icon"
+import { ReviewForm } from "../components/OnchainReviews"
 import { TxHistory, TxRef } from "../components/TxHistory"
 import {
 	BackLink,
@@ -16,7 +17,7 @@ import {
 	Photo,
 	StatusBadge,
 } from "../components/ui"
-import { registryContractId } from "../chain/registry"
+import { formatDateLong } from "../dates"
 import { ME, ownerById, useRentSafe } from "../store/useRentSafe"
 import styles from "./BookingPage.module.css"
 
@@ -78,7 +79,9 @@ export const BookingPage = () => {
 						<StatusBadge status={b.status} />
 						<ModeBadge mode={b.mode} />
 					</div>
-					<h1 className={styles.title}>{listing?.title ?? "Bien eliminado"}</h1>
+					<h1 className={styles.title}>
+						{listing?.title ?? `Publicación ${b.listingId}`}
+					</h1>
 					<p className="muted">
 						{formatDateLong(b.start)} → {formatDateLong(b.end)} · {b.units}{" "}
 						{listing ? unitLabel(listing.unit, b.units) : ""} ·{" "}
@@ -176,6 +179,13 @@ export const BookingPage = () => {
 						<h2 className={styles.h2}>Siguiente paso</h2>
 						<BookingActions booking={b} />
 					</section>
+					{b.mode === "onchain" &&
+						(b.status === "completed" || b.status === "resolved") && (
+							<section className="panel">
+								<h2 className={styles.h2}>Reseña verificada</h2>
+								<ReviewForm booking={b} />
+							</section>
+						)}
 					<section className="panel">
 						<h2 className={styles.h2}>Resumen del coste</h2>
 						{listing && (

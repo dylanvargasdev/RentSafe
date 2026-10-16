@@ -121,7 +121,25 @@ export function meAsOwner(s: State): Owner | undefined {
 	}
 }
 
+/** Prefix for parties known only by their wallet (bookings synced from the chain). */
+export const WALLET_PREFIX = "wallet:"
+export const walletPartyId = (address: string) => `${WALLET_PREFIX}${address}`
+
 export function ownerById(s: State, id: string): Owner | undefined {
+	if (id.startsWith(WALLET_PREFIX)) {
+		const address = id.slice(WALLET_PREFIX.length)
+		return {
+			id,
+			name: `Billetera ${address.slice(0, 4)}…${address.slice(-4)}`,
+			city: "",
+			joined: "",
+			bio: "",
+			avatar: address.slice(0, 2),
+			verified: false,
+			payoutAddress: address,
+			isDemo: false,
+		}
+	}
 	if (id === ME)
 		return (
 			meAsOwner(s) ?? {
@@ -222,6 +240,30 @@ export const actions = {
 			id,
 			history: [],
 			createdAt: now(),
+			updatedAt: now(),
+		}
+		set((s) => ({ ...s, bookings: [booking, ...s.bookings] }))
+		return id
+	},
+	/** Add a booking found on-chain that this browser didn't know about. */
+	importBooking(
+		b: Omit<Booking, "id" | "history" | "createdAt" | "updatedAt">,
+		createdAt: string,
+	) {
+		const id = uid("bk")
+		const booking: Booking = {
+			...b,
+			id,
+			history: [
+				{
+					id: uid("tx"),
+					label: "Reserva sincronizada desde el registro on-chain",
+					kind: "registry",
+					status: "confirmed",
+					at: now(),
+				},
+			],
+			createdAt,
 			updatedAt: now(),
 		}
 		set((s) => ({ ...s, bookings: [booking, ...s.bookings] }))

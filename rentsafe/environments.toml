@@ -23,8 +23,10 @@ name = "me"
 default = true
 
 [development.contracts]
-# RentSafe: acuerdos de alquiler on-chain (admin = deployer `me`, resuelve disputas desde la CLI)
-rental_registry = { client = true, constructor_args = "--admin me" }
+# RentSafe: acuerdos de alquiler on-chain. admin = deployer `me` (puede actualizar
+# el contrato y resolver disputas como respaldo). token = USDC de testnet (SAC del
+# emisor GBBD47…FLA5): los escrows vinculados deben custodiar este activo.
+rental_registry = { client = true, constructor_args = "--admin me --token CBIELTK6YBZJU5UP2WWQEUCYKLPU6AUNZ2BQ4WWFEIE3USCIHMXQDAMA" }
 # `client = true` means: build -> deploy -> generate a TS client you can import as
 #   import { reputation } from "@stellar-scaffold/app-lib/clients"
 # The key must be the snake_case version of the crate `name` in its Cargo.toml.
@@ -60,7 +62,7 @@ name = "testnet-user"
 default = true
 
 [staging.contracts]
-rental_registry = { client = true, constructor_args = "--admin testnet-user" }
+rental_registry = { client = true, constructor_args = "--admin testnet-user --token CBIELTK6YBZJU5UP2WWQEUCYKLPU6AUNZ2BQ4WWFEIE3USCIHMXQDAMA" }
 reputation = { client = true }
 fungible_allowlist_example = { client = false }
 nft_enumerable_example = { client = false }

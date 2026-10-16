@@ -2,7 +2,13 @@ import { useSyncExternalStore } from "react"
 import { ME } from "../data/seed"
 import { type State, store } from "./store"
 
-export { actions, meAsOwner, ownerById } from "./store"
+export {
+	actions,
+	meAsOwner,
+	ownerById,
+	walletPartyId,
+	WALLET_PREFIX,
+} from "./store"
 export { ME }
 
 /** Subscribe to the whole RentSafe state (small, so selecting is cheap). */

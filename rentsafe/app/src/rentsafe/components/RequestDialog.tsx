@@ -1,18 +1,21 @@
-import { networkPassphrase } from "@stellar-scaffold/app-lib"
+import { fetchBalances, networkPassphrase } from "@stellar-scaffold/app-lib"
+import { useQuery } from "@tanstack/react-query"
 import { useMemo, useState } from "react"
 import { Link, useNavigate } from "react-router-dom"
 import { useWallet } from "../../hooks/useWallet"
 import { errorMessage } from "../../lib/errors"
+import { platformAddress, USDC_BALANCE_KEY } from "../../trustless/config"
 import { onchainChecks } from "../chain/readiness"
 import { useCreateRequest } from "../chain/useBookingFlow"
 import { formatDateLong } from "../dates"
+import { WalletSetup } from "../pages/ProfilePage"
 import { type Quote } from "../pricing"
 import { ownerById, useRentSafe } from "../store/useRentSafe"
 import { type Listing } from "../types"
 import { CostSummary } from "./CostSummary"
 import { Icon } from "./Icon"
-import { Button, Callout, Dialog } from "./ui"
 import styles from "./RequestDialog.module.css"
+import { Button, Callout, Dialog } from "./ui"
 
 /** Step 4–5 of the flow: review conditions, pick a mode, confirm. */
 export const RequestDialog = ({
@@ -36,6 +39,22 @@ export const RequestDialog = ({
 	const [message, setMessage] = useState("")
 	const [error, setError] = useState("")
 
+	// The escrow pays out in USDC: whoever receives it needs a trustline, or
+	// collecting fails after the money is already in the escrow.
+	const canReceive = useQuery({
+		queryKey: ["can-receive-usdc", owner?.payoutAddress, platformAddress],
+		enabled: open && mode === "onchain",
+		staleTime: 30_000,
+		queryFn: async () => {
+			const has = async (a?: string) =>
+				a ? Boolean((await fetchBalances(a))[USDC_BALANCE_KEY]) : false
+			const [ownerOk, platformOk] = await Promise.all([
+				has(owner?.payoutAddress),
+				has(platformAddress),
+			])
+			return { ownerOk, platformOk }
+		},
+	})
 	const checks = useMemo(
 		() =>
 			onchainChecks({
@@ -44,11 +63,26 @@ export const RequestDialog = ({
 				appPassphrase: networkPassphrase,
 				balances,
 				owner,
-				amount: quote.rent + quote.deposit,
+				amount: quote.escrowAmount,
+				fee: quote.fee,
+				ownerCanReceive: canReceive.data?.ownerOk,
+				platformCanReceive: canReceive.data?.platformOk,
 			}),
-		[address, walletPassphrase, balances, owner, quote.rent, quote.deposit],
+		[
+			address,
+			walletPassphrase,
+			balances,
+			owner,
+			quote.escrowAmount,
+			quote.fee,
+			canReceive.data,
+		],
 	)
 	const onchainReady = checks.every((c) => c.ok || !c.required)
+	const usdcBalance = balances[USDC_BALANCE_KEY]?.balance
+	const hasEnoughUsdc =
+		usdcBalance !== undefined &&
+		Number(usdcBalance.replace(/,/g, "")) >= quote.escrowAmount
 
 	const submit = async () => {
 		setError("")
@@ -63,7 +97,7 @@ export const RequestDialog = ({
 		try {
 			const id = await create(listing, quote, mode, message)
 			onClose()
-			navigate(`/reservas/${id}`)
+			void navigate(`/reservas/${id}`)
 		} catch (e) {
 			setError(errorMessage(e))
 		}
@@ -100,9 +134,9 @@ export const RequestDialog = ({
 			<CostSummary quote={quote} price={listing.price} unit={listing.unit} />
 			<Callout tone="info" icon="lock">
 				No pagas nada todavía. Si {owner?.name ?? "el propietario"} acepta,
-				depositarás <strong>{quote.rent + quote.deposit} USDC</strong> en un
-				escrow. El propietario cobra cuando confirmas la entrega; el depósito
-				vuelve a ti tras la devolución.
+				depositarás <strong>{quote.escrowAmount} USDC</strong> en un escrow. El
+				propietario cobra cuando confirmas la entrega; el depósito vuelve a ti
+				tras la devolución.
 			</Callout>
 
 			<fieldset className={styles.modes}>
@@ -168,6 +202,14 @@ export const RequestDialog = ({
 						</li>
 					)}
 				</ul>
+			)}
+			{mode === "onchain" && address && !hasEnoughUsdc && (
+				<div className="stack" style={{ gap: 8 }}>
+					<p className="field-label">
+						Prepara tu billetera para el depósito ({quote.escrowAmount} USDC)
+					</p>
+					<WalletSetup />
+				</div>
 			)}
 
 			{listing.requirements.length > 0 && (

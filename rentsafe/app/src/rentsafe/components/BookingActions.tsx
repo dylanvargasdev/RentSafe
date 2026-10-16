@@ -1,15 +1,17 @@
 import { shortAddress } from "@stellar-scaffold/app-lib"
 import { useState } from "react"
+import { escrowTotal, milestoneAmount } from "../chain/milestones"
 import {
 	type ActionDef,
 	availableActions,
+	disputedMain,
 	useBookingFlow,
 } from "../chain/useBookingFlow"
 import { money } from "../config"
 import { ownerById, useRentSafe } from "../store/useRentSafe"
 import { type Booking } from "../types"
-import { Button, Callout, Dialog } from "./ui"
 import styles from "./BookingActions.module.css"
+import { Button, Callout, Dialog } from "./ui"
 
 const ROLE_NAME = {
 	tenant: "arrendatario",
@@ -57,6 +59,10 @@ export const BookingActions = ({ booking }: { booking: Booking }) => {
 	const moves =
 		pending &&
 		["fund", "releaseRent", "releaseDeposit", "resolve"].includes(pending.id)
+	/** Amount the arbiter splits (deposit, or the rent in a delivery dispute). */
+	const splitAmount = milestoneAmount(booking, disputedMain(booking))
+	const fundSignatures =
+		(booking.escrowId ? 0 : 1) + (booking.escrowLinked ? 0 : 1) + 1
 
 	return (
 		<div className={styles.wrap}>
@@ -129,28 +135,63 @@ export const BookingActions = ({ booking }: { booking: Booking }) => {
 				<p>{pending?.help}</p>
 				{pending?.id === "fund" && (
 					<Callout tone="info" icon="lock">
-						Vas a depositar{" "}
-						<strong>{money(booking.rent + booking.deposit)}</strong> (
+						Vas a depositar <strong>{money(escrowTotal(booking))}</strong> (
 						{money(booking.rent)} de alquiler + {money(booking.deposit)} de
-						depósito) en un escrow nuevo.
+						depósito
+						{booking.fee > 0 ? ` + ${money(booking.fee)} de comisión` : ""}) en
+						un escrow.
 						{booking.mode === "onchain" &&
-							` Tu billetera te pedirá ${booking.registryId !== undefined && !booking.escrowLinked ? "3 firmas: crear el escrow, vincularlo a la reserva y depositar" : "2 firmas: crear el escrow y depositar"}.`}
+							` Tu billetera te pedirá ${fundSignatures} ${fundSignatures === 1 ? "firma" : "firmas"}${fundSignatures === 3 ? ": crear el escrow, verificarlo y vincularlo a la reserva, y depositar" : ""}.`}
 					</Callout>
 				)}
 				{pending?.id === "releaseRent" && (
 					<Callout tone="info">
 						Recibirás {money(booking.rent)} menos la comisión del protocolo de
 						Trustless Work (0,3%).
+						{booking.fee > 0 &&
+							` También liberas la comisión de ${money(booking.fee)} a la plataforma (una firma más).`}
+					</Callout>
+				)}
+				{pending?.id === "confirmReceipt" &&
+					booking.fee > 0 &&
+					booking.mode === "onchain" && (
+						<Callout tone="info">
+							Firmarás dos aprobaciones: el alquiler y la comisión de la
+							plataforma.
+						</Callout>
+					)}
+				{pending?.id === "markDelivered" &&
+					booking.fee > 0 &&
+					booking.mode === "onchain" && (
+						<Callout tone="info">
+							Firmarás dos veces: la entrega del alquiler y la de la comisión de
+							la plataforma.
+						</Callout>
+					)}
+				{pending?.id === "disputeDelivery" && (
+					<Callout tone="danger" icon="alert">
+						El árbitro decidirá cuánto del alquiler corresponde al propietario.
+						El depósito
+						{booking.fee > 0 ? " y la comisión vuelven" : " vuelve"}{" "}
+						íntegramente a ti.
 					</Callout>
 				)}
 				{pending?.input === "notes" && (
 					<label className="field">
-						<span>Estado en que recibiste el bien</span>
+						<span>
+							{pending.id === "markDelivered"
+								? "Detalles de la entrega (opcional)"
+								: "Estado en que recibiste el bien"}
+						</span>
 						<textarea
 							value={notes}
 							onChange={(e) => setNotes(e.target.value)}
 							maxLength={200}
-							placeholder="Ej.: devuelto completo y limpio, sin daños"
+							placeholder={
+								pending.id === "markDelivered"
+									? "Ej.: entregado en mano con cargador y control"
+									: "Ej.: devuelto completo y limpio, sin daños"
+							}
 						/>
 						<span className="hint">
 							Queda como evidencia en el escrow
@@ -186,17 +227,18 @@ export const BookingActions = ({ booking }: { booking: Booking }) => {
 						)}
 						<label className="field">
 							<span>
-								Para el propietario: {money(toOwner)} · Para el arrendatario:{" "}
-								{money(Math.round((booking.deposit - toOwner) * 100) / 100)}
+								{booking.disputeKind === "delivery" ? "Alquiler" : "Depósito"}{" "}
+								para el propietario: {money(toOwner)} · Para el arrendatario:{" "}
+								{money(Math.round((splitAmount - toOwner) * 100) / 100)}
 							</span>
 							<input
 								type="range"
 								min={0}
-								max={booking.deposit}
-								step={booking.deposit >= 100 ? 5 : 1}
+								max={splitAmount}
+								step={splitAmount >= 100 ? 5 : 1}
 								value={toOwner}
 								onChange={(e) => setToOwner(Number(e.target.value))}
-								aria-label="Parte del depósito para el propietario"
+								aria-label="Parte en disputa para el propietario"
 								style={{ accentColor: "var(--pine)" }}
 							/>
 						</label>

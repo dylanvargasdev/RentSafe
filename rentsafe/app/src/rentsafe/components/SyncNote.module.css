@@ -1,0 +1,43 @@
+.note {
+	display: flex;
+	align-items: center;
+	gap: 8px;
+	height: 34px;
+	margin-top: 6px;
+	min-width: 0;
+}
+
+.text {
+	min-width: 0;
+	white-space: nowrap;
+	overflow: hidden;
+	text-overflow: ellipsis;
+}
+
+/* State as a fixed-size dot: changes colour, never size. */
+.dot {
+	flex: none;
+	width: 8px;
+	height: 8px;
+	border-radius: 50%;
+	transition: background-color 0.3s ease;
+}
+.ok {
+	background: var(--pine);
+}
+.busy {
+	background: var(--pine-line);
+}
+.error {
+	background: #c2410c;
+}
+.off {
+	background: var(--line);
+}
+
+/* Label never changes; fixed width and kept in the layout even when hidden. */
+.button {
+	flex: none;
+	width: 96px;
+	justify-content: center;
+}

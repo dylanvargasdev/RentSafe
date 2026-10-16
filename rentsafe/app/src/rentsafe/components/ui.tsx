@@ -204,7 +204,14 @@ export const Photo = ({
 	)
 }
 
-/** Accessible modal built on <dialog>. */
+/**
+ * Modal built on a NON-modal <dialog> (`show()`) plus our own backdrop.
+ *
+ * Not `showModal()` on purpose: a modal dialog lives in the browser's top layer
+ * and makes the rest of the page inert, so wallet UIs injected into the page
+ * (the Cavos vault iframe that asks to approve a signature) would open hidden
+ * behind it and the signature would never come back.
+ */
 export const Dialog = ({
 	open,
 	onClose,
@@ -222,33 +229,57 @@ export const Dialog = ({
 	useEffect(() => {
 		const d = ref.current
 		if (!d) return
-		if (open && !d.open) d.showModal()
+		if (open && !d.open) {
+			d.show()
+			d.querySelector<HTMLElement>(
+				"input, textarea, select, button:not(.icon-btn)",
+			)?.focus()
+		}
 		if (!open && d.open) d.close()
 	}, [open])
+	// Escape and scroll lock (a non-modal dialog doesn't do these by itself).
+	useEffect(() => {
+		if (!open) return
+		const onKey = (e: KeyboardEvent) => {
+			if (e.key === "Escape") onClose()
+		}
+		const overflow = document.body.style.overflow
+		document.body.style.overflow = "hidden"
+		document.addEventListener("keydown", onKey)
+		return () => {
+			document.body.style.overflow = overflow
+			document.removeEventListener("keydown", onKey)
+		}
+	}, [open, onClose])
 	return (
-		<dialog
-			ref={ref}
-			className="rs-dialog"
-			onClose={onClose}
-			onCancel={(e) => {
-				e.preventDefault()
-				onClose()
-			}}
-			aria-labelledby="rs-dialog-title"
-		>
+		<>
 			{open && (
-				<>
-					<div className="rs-dialog-head">
-						<h3 id="rs-dialog-title">{title}</h3>
-						<button className="icon-btn" onClick={onClose} aria-label="Cerrar">
-							<Icon name="x" size={18} />
-						</button>
-					</div>
-					<div className="rs-dialog-body">{children}</div>
-					{footer && <div className="rs-dialog-foot">{footer}</div>}
-				</>
+				<div className="rs-dialog-backdrop" onClick={onClose} aria-hidden />
 			)}
-		</dialog>
+			<dialog
+				ref={ref}
+				className="rs-dialog"
+				aria-modal="true"
+				aria-labelledby="rs-dialog-title"
+			>
+				{open && (
+					<>
+						<div className="rs-dialog-head">
+							<h3 id="rs-dialog-title">{title}</h3>
+							<button
+								className="icon-btn"
+								onClick={onClose}
+								aria-label="Cerrar"
+							>
+								<Icon name="x" size={18} />
+							</button>
+						</div>
+						<div className="rs-dialog-body">{children}</div>
+						{footer && <div className="rs-dialog-foot">{footer}</div>}
+					</>
+				)}
+			</dialog>
+		</>
 	)
 }
 

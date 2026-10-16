@@ -5,8 +5,8 @@ import { isFeatured, ratingOf } from "../pricing"
 import { actions, useRentSafe } from "../store/useRentSafe"
 import { type Listing } from "../types"
 import { Icon } from "./Icon"
-import { Badge, Photo } from "./ui"
 import styles from "./ListingCard.module.css"
+import { Badge, Photo } from "./ui"
 
 export const FavoriteButton = ({
 	listingId,

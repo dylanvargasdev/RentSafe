@@ -32,8 +32,12 @@ export const cavosEnvironment: "development" | "production" =
 		: "development"
 
 /**
- * NEVER change this after real users have signed in: on Stellar it is the
- * HKDF salt of the wallet key, so a new salt silently gives every user a new,
- * empty wallet.
+ * NEVER change this after real users have signed in. On native Stellar it is
+ * the HKDF salt of the spend key, and Cavos keeps one registry row per
+ * (userId, appId, chain, network): a new salt derives a different address that
+ * no longer matches that row. Set to "rentsafe" (it was the scaffold default
+ * "scaffold-stellar-agentic"), so use a Cavos app (PUBLIC_CAVOS_APP_ID) created
+ * for RentSafe, not one already used with the old salt.
+ * Docs: https://docs.cavos.xyz/llms-full.txt
  */
-export const CAVOS_APP_SALT = "scaffold-stellar-agentic"
+export const CAVOS_APP_SALT = "rentsafe"

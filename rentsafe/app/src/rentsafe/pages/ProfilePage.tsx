@@ -21,12 +21,15 @@ import { Icon } from "../components/Icon"
 import { TxRef } from "../components/TxHistory"
 import { Avatar, Badge, Button, Callout } from "../components/ui"
 import { formatDateLong } from "../dates"
-import { actions, useSession } from "../store/useRentSafe"
 import { store } from "../store/store"
+import { actions, useSession } from "../store/useRentSafe"
 import styles from "./ProfilePage.module.css"
 
-/** Wallet → test XLM → USDC trustline → test USDC, in Spanish. */
-const WalletSetup = () => {
+/**
+ * Wallet → test XLM → USDC trustline → test USDC, in Spanish. Also shown
+ * inside the booking request dialog when the wallet can't pay the escrow yet.
+ */
+export const WalletSetup = () => {
 	const { address, balances, updateBalances, signTransaction, connector } =
 		useWallet()
 	const cavos = useCavosState()
@@ -314,7 +317,7 @@ export const ProfilePage = () => {
 						</li>
 						<li>
 							<Badge tone={platformAddress ? "success" : "warning"}>
-								{platformAddress ? "Configurado" : "Modo demo"}
+								{platformAddress ? "Configurado" : "Falta (solo simulación)"}
 							</Badge>
 							Árbitro de disputas (PUBLIC_PLATFORM_ADDRESS)
 						</li>

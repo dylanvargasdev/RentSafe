@@ -1,7 +1,7 @@
 import { Link } from "react-router-dom"
 import { CATEGORIES } from "../categories"
-import { Logo } from "./Header"
 import styles from "./Footer.module.css"
+import { Logo } from "./Header"
 
 export const Footer = () => (
 	<footer className={styles.footer}>

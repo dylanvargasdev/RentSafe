@@ -7,14 +7,18 @@ export const RENTSAFE = {
 	currency: "USDC",
 	/**
 	 * RentSafe service fee charged to the tenant, in percent.
-	 * Kept at 0 in the demo: Trustless Work would deduct a platform fee from
-	 * EVERY release, including the deposit refund to the tenant.
+	 * Charged as its own escrow milestone paid to PUBLIC_PLATFORM_ADDRESS (the
+	 * escrow's percentage `platformFee` stays 0, because Trustless Work would
+	 * deduct it from EVERY release, including the deposit refund).
 	 */
 	serviceFeePercent: Number(import.meta.env.PUBLIC_RENTSAFE_FEE_PERCENT ?? 0),
 	/** Trustless Work protocol fee, deducted from each release (not added on top). */
 	protocolFeePercent: 0.3,
-	/** localStorage key (bump the version to reset everyone's demo data). */
-	storageKey: "rentsafe:v1",
+	/**
+	 * localStorage key (bump the version to reset everyone's demo data).
+	 * v2: rental_registry v2 (new contract id, escrow checks, fee milestone).
+	 */
+	storageKey: "rentsafe:v2",
 	/**
 	 * Optional: a testnet address that receives rent for the SEED listings, so
 	 * the on-chain flow can be tried on them (e.g. your second wallet).

@@ -14,7 +14,7 @@
     "contracts:build": "stellar scaffold build --build-clients"
   },
   "dependencies": {
-    "@cavos/kit": "0.2.5",
+    "@cavos/kit": "0.4.2",
     "@stellar-scaffold/app-lib": "*",
     "@stellar/stellar-sdk": "^16.0.1",
     "@tanstack/react-query": "^5.90.17",

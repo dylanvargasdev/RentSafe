@@ -174,7 +174,7 @@ export const ListingFormPage = () => {
 			available: f.available,
 			blocked: existing?.blocked ?? [],
 		})
-		navigate(`/bien/${newId}`)
+		void navigate(`/bien/${newId}`)
 	}
 
 	const err = (k: keyof Form) =>

@@ -50,7 +50,7 @@ export const SearchBar = ({
 		if (maxPrice) p.set(PARAM.maxPrice, maxPrice)
 		if (onlyAvailable) p.set(PARAM.onlyAvailable, "1")
 		const qs = p.toString()
-		navigate(
+		void navigate(
 			category
 				? `/c/${category}${qs ? `?${qs}` : ""}`
 				: `/buscar${qs ? `?${qs}` : ""}`,

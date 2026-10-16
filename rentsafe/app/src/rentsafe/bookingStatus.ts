@@ -29,7 +29,7 @@ export const STATUS: Record<
 	funded: {
 		label: "Fondos en garantía",
 		tone: "info",
-		help: "El dinero está en el escrow. El arrendatario confirma cuando recibe el bien.",
+		help: "El dinero está en el escrow. El propietario marca la entrega y el arrendatario la confirma.",
 	},
 	active: {
 		label: "Alquiler activo",
@@ -127,7 +127,11 @@ export const TIMELINE: {
 export const heldInEscrow = (b: Booking) => {
 	if (!["funded", "active", "return_review", "disputed"].includes(b.status))
 		return 0
-	return (b.rentReleased ? 0 : b.rent) + (b.depositReleased ? 0 : b.deposit)
+	return (
+		(b.rentReleased ? 0 : b.rent) +
+		(b.depositReleased ? 0 : b.deposit) +
+		(b.feeReleased ? 0 : b.fee)
+	)
 }
 
 /** Owner earnings derived from booking states (never invented). */

@@ -1,3 +1,9 @@
+/* Reserve the scrollbar's space: pages that grow or shrink (lists loading,
+   syncing) don't shift sideways when the scrollbar appears or disappears. */
+html {
+	scrollbar-gutter: stable;
+}
+
 /*
  * RentSafe design tokens + primitives.
  * Pine green = trust/safety, used sparingly: primary actions, the escrow
@@ -542,6 +548,13 @@ button {
 
 /* ── Dialog ───────────────────────────────────────────────────────────── */
 .rs-dialog {
+	position: fixed;
+	inset: 0;
+	margin: auto;
+	height: fit-content;
+	overflow: auto;
+	z-index: 1001;
+	background: var(--paper);
 	border: 0;
 	padding: 0;
 	border-radius: var(--r-lg);
@@ -551,7 +564,12 @@ button {
 	box-shadow: 0 24px 64px rgba(10, 30, 20, 0.25);
 	color: var(--ink);
 }
-.rs-dialog::backdrop {
+/* Our own backdrop: the dialog is non-modal so wallet UIs (Cavos vault) can
+   open above it. Kept below their z-index (2147483647). */
+.rs-dialog-backdrop {
+	position: fixed;
+	inset: 0;
+	z-index: 1000;
 	background: rgba(15, 25, 20, 0.45);
 }
 .rs-dialog[open] {

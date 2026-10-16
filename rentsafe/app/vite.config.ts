@@ -18,6 +18,9 @@ export default defineConfig({
 	build: {
 		target: "esnext",
 	},
+	// After changing SDK versions (e.g. @cavos/kit), stop every `npm start`
+	// before starting again: with strictPort a second server exits, and the old
+	// one keeps serving its previously optimized dependencies.
 	optimizeDeps: {
 		exclude: ["@stellar/stellar-xdr-json"],
 	},
