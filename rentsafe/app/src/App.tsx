@@ -1,7 +1,5 @@
 import { useEffect } from "react"
 import { Outlet, Route, Routes, useLocation } from "react-router-dom"
-import Debug from "./pages/Debug"
-import Escrows from "./pages/Escrows"
 import { ChainSyncContext } from "./rentsafe/chain/syncContext"
 import { useChainSync } from "./rentsafe/chain/useChainSync"
 import { Footer } from "./rentsafe/components/Footer"
@@ -95,9 +93,6 @@ function App() {
 					}
 				/>
 				{/* Starter tools, kept for developers (not in the main navigation) */}
-				<Route path="/escrows" element={<Escrows />} />
-				<Route path="/debug" element={<Debug />} />
-				<Route path="/debug/:contractName" element={<Debug />} />
 				<Route path="*" element={<NotFoundPage />} />
 			</Route>
 		</Routes>

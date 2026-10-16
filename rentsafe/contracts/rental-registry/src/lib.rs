@@ -663,10 +663,13 @@ impl RentalRegistry {
     }
 
     /// Actualiza el código del contrato (solo el administrador).
-    pub fn upgrade(env: Env, wasm_hash: BytesN<32>) {
+    ///
+    /// El parámetro se llama `new_wasm_hash` porque así lo invoca
+    /// `stellar scaffold` al actualizar en el sitio un contrato ya desplegado.
+    pub fn upgrade(env: Env, new_wasm_hash: BytesN<32>) {
         let admin: Address = env.storage().instance().get(&DataKey::Admin).unwrap();
         admin.require_auth();
-        env.deployer().update_current_contract_wasm(wasm_hash);
+        env.deployer().update_current_contract_wasm(new_wasm_hash);
     }
 
     // ── Lecturas ────────────────────────────────────────────────────────────
