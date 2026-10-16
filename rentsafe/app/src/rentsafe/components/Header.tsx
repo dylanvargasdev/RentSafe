@@ -16,27 +16,27 @@ import { Icon } from "./Icon"
 import { Avatar } from "./ui"
 import { WalletMenu } from "./WalletMenu"
 
+/**
+ * RentSafe mark: a block (blockchain) with a keyhole on its front face, the
+ * deposit locked on-chain. The three faces are separated by real gaps, so it
+ * reads on any background. Same drawing as app/public/rentsafe.svg.
+ */
+const LogoMark = ({ size = 32 }: { size?: number }) => (
+	<svg width={size} height={size} viewBox="0 0 64 64" aria-hidden>
+		<polygon points="32,8.8 50.4,19.5 32,30.2 13.6,19.5" fill="#8fdcb8" />
+		<polygon points="12.7,20.9 31.3,31.6 31.3,54.8 12.7,43.1" fill="#0e5a43" />
+		<polygon points="32.7,31.6 51.3,20.9 51.3,43.1 32.7,54.8" fill="#083b2c" />
+		<circle cx="22" cy="34.5" r="3.6" fill="#fff" />
+		<path d="M20.3 37 19.3 44h5.4l-1-7z" fill="#fff" />
+	</svg>
+)
+
 export const Logo = () => (
 	<Link to="/" className={styles.logo} aria-label="RentSafe, inicio">
-		<svg width="30" height="30" viewBox="0 0 32 32" aria-hidden>
-			<rect width="32" height="32" rx="9" fill="var(--pine)" />
-			<path
-				d="M8 15.2 16 8.5l8 6.7V23a1 1 0 0 1-1 1H9a1 1 0 0 1-1-1z"
-				fill="none"
-				stroke="#fff"
-				strokeWidth="2"
-				strokeLinejoin="round"
-			/>
-			<path
-				d="m12.6 17.6 2.4 2.4 4.6-4.6"
-				fill="none"
-				stroke="#9fe0c2"
-				strokeWidth="2.2"
-				strokeLinecap="round"
-				strokeLinejoin="round"
-			/>
-		</svg>
-		<span>RentSafe</span>
+		<LogoMark size={34} />
+		<span>
+			Rent<span className={styles.logoAccent}>Safe</span>
+		</span>
 	</Link>
 )
 
