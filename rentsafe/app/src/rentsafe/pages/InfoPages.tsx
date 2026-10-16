@@ -2,9 +2,9 @@ import { useEffect } from "react"
 import { Link, useLocation, useParams } from "react-router-dom"
 import { platformAddress } from "../../trustless/config"
 import { STATUS } from "../bookingStatus"
-import { RENTSAFE } from "../config"
 import { FundsFlow } from "../components/FundsFlow"
 import { Callout, EmptyState, StatusBadge } from "../components/ui"
+import { RENTSAFE } from "../config"
 import { type BookingStatus } from "../types"
 import styles from "./InfoPages.module.css"
 
@@ -97,14 +97,18 @@ export const HowItWorksPage = () => {
 						depósito. El árbitro de la plataforma decide el reparto; no puede
 						abrir disputas ni quedarse fondos para sí.
 						{!platformAddress &&
-							" En esta demo no hay árbitro configurado: la billetera del arrendatario cumple ese papel."}
+							" Sin árbitro configurado, el modo on-chain está desactivado (solo simulación)."}{" "}
+						Si el bien nunca llega, el arrendatario puede abrir una disputa
+						antes de confirmar la entrega: el árbitro reparte el alquiler y el
+						depósito vuelve íntegro.
 					</li>
 					<li>
 						<strong>Comisiones:</strong> RentSafe cobra{" "}
-						{RENTSAFE.serviceFeePercent}% (parámetro de demostración). Trustless
-						Work descuenta un{" "}
-						{String(RENTSAFE.protocolFeePercent).replace(".", ",")}% de cada
-						liberación.
+						{RENTSAFE.serviceFeePercent}% del alquiler (parámetro de
+						demostración), como un hito propio del escrow que se libera junto
+						con el alquiler; nunca se descuenta del depósito. Trustless Work
+						descuenta un {String(RENTSAFE.protocolFeePercent).replace(".", ",")}
+						% de cada liberación.
 					</li>
 				</ul>
 				<Callout icon="info">
@@ -171,7 +175,8 @@ const LEGAL: Record<string, { title: string; body: string[] }> = {
 			"Antes de depositar fondos, cualquiera de las partes puede cancelar sin costo.",
 			"Una vez depositados, el alquiler solo se libera al propietario cuando el arrendatario confirma la entrega, y el depósito solo vuelve al arrendatario con la aprobación de ambos.",
 			"Si hay daños o desacuerdo, cualquiera puede abrir una disputa sobre el depósito. El árbitro de la plataforma decide el reparto y lo ejecuta el escrow.",
-			"Limitación del prototipo: si el bien nunca se entrega, el alquiler queda retenido (el propietario no puede cobrarlo), pero la disputa sobre el hito de alquiler aún no está disponible en la interfaz.",
+			"Si el bien nunca se entrega, el arrendatario puede abrir una disputa antes de confirmar la entrega: el alquiler, el depósito y la comisión quedan bloqueados; el árbitro decide cuánto del alquiler corresponde al propietario y el resto vuelve al arrendatario.",
+			"El árbitro es una billetera de la plataforma distinta de las partes. El contrato rental_registry rechaza cualquier escrow en el que el arrendatario o el propietario sean árbitros.",
 		],
 	},
 }

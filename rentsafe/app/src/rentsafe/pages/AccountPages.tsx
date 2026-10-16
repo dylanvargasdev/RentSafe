@@ -8,6 +8,7 @@ import {
 } from "react-router-dom"
 import { BookingRow } from "../components/BookingRow"
 import { ListingCard } from "../components/ListingCard"
+import { SyncNote } from "../components/SyncNote"
 import { Callout, EmptyState } from "../components/ui"
 import { actions, ME, useRentSafe, useSession } from "../store/useRentSafe"
 import { type Booking } from "../types"
@@ -57,7 +58,7 @@ export const AuthPage = () => {
 			})
 			return
 		}
-		navigate(next.startsWith("/") ? next : "/", { replace: true })
+		void navigate(next.startsWith("/") ? next : "/", { replace: true })
 	}
 
 	return (
@@ -173,6 +174,7 @@ export const TripsPage = () => {
 			<p className="muted" style={{ marginTop: 4 }}>
 				Solicitudes, alquileres en curso y tu historial como arrendatario.
 			</p>
+			<SyncNote />
 			{mine.length === 0 ? (
 				<div style={{ marginTop: 24 }}>
 					<EmptyState

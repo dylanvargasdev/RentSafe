@@ -124,7 +124,7 @@ export interface Booking {
 	/** Wallets involved (on-chain mode). */
 	tenantAddress?: string
 	ownerAddress?: string
-	/** Escrow dispute resolver (platform address, or the tenant in demo mode). */
+	/** Escrow dispute resolver = platform arbiter (PUBLIC_PLATFORM_ADDRESS). */
 	resolverAddress?: string
 	start: string
 	end: string
@@ -144,9 +144,30 @@ export interface Booking {
 	depositReleased: boolean
 	/** Milestone approvals by the tenant: [rent, deposit]. */
 	approved: [boolean, boolean]
+	/**
+	 * Escrow milestones whose status the owner already set ("entregado" for
+	 * rent/fee, "devuelto" for the deposit). Trustless Work refuses to approve a
+	 * milestone with an empty status, so the tenant can only approve these.
+	 */
+	statusSet?: number[]
+	/** Platform fee milestone (only when fee > 0): approved / released. */
+	feeApproved?: boolean
+	feeReleased?: boolean
 	returnNotes?: string
+	/**
+	 * `deposit`: damage/return dispute over the deposit.
+	 * `delivery`: the tenant says the item never arrived (rent, deposit and fee
+	 * are frozen until the arbiter decides).
+	 */
+	disputeKind?: "deposit" | "delivery"
 	disputeReason?: string
+	/** Escrow milestones already disputed / resolved (for safe retries). */
+	disputedMilestones?: number[]
+	resolvedMilestones?: number[]
+	/** Arbiter's split of the main disputed milestone (deposit or rent). */
 	resolution?: { toOwner: number; toTenant: number }
+	/** The connected wallet already left its on-chain review. */
+	reviewed?: boolean
 	message?: string
 	history: TxRecord[]
 	createdAt: string

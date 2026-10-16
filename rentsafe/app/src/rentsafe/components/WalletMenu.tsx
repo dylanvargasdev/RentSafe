@@ -4,8 +4,8 @@ import { Link } from "react-router-dom"
 import { useCavosState } from "../../cavos/context"
 import { useWallet } from "../../hooks/useWallet"
 import { USDC_BALANCE_KEY } from "../../trustless/config"
-import { Icon } from "./Icon"
 import styles from "./Header.module.css"
+import { Icon } from "./Icon"
 
 /**
  * Wallet indicator for the header. Separate from the RentSafe account on

@@ -2,6 +2,8 @@ import { useEffect } from "react"
 import { Outlet, Route, Routes, useLocation } from "react-router-dom"
 import Debug from "./pages/Debug"
 import Escrows from "./pages/Escrows"
+import { ChainSyncContext } from "./rentsafe/chain/syncContext"
+import { useChainSync } from "./rentsafe/chain/useChainSync"
 import { Footer } from "./rentsafe/components/Footer"
 import { Header } from "./rentsafe/components/Header"
 import {
@@ -10,6 +12,7 @@ import {
 	RequireAuth,
 	TripsPage,
 } from "./rentsafe/pages/AccountPages"
+import { ArbiterPage } from "./rentsafe/pages/ArbiterPage"
 import { BookingPage } from "./rentsafe/pages/BookingPage"
 import { HomePage } from "./rentsafe/pages/HomePage"
 import {
@@ -48,6 +51,14 @@ function App() {
 					element={
 						<RequireAuth>
 							<BookingPage />
+						</RequireAuth>
+					}
+				/>
+				<Route
+					path="/arbitro"
+					element={
+						<RequireAuth>
+							<ArbiterPage />
 						</RequireAuth>
 					}
 				/>
@@ -101,7 +112,17 @@ const ScrollToTop = () => {
 	return null
 }
 
-const AppLayout = () => (
+const AppLayout = () => {
+	// On-chain bookings are read back from Stellar for the connected wallet.
+	const sync = useChainSync()
+	return (
+		<ChainSyncContext.Provider value={sync}>
+			<Shell />
+		</ChainSyncContext.Provider>
+	)
+}
+
+const Shell = () => (
 	<div className="rs-app">
 		<a href="#contenido" className="rs-skip">
 			Saltar al contenido

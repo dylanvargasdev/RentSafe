@@ -1,6 +1,6 @@
 import { money } from "../config"
-import { Icon } from "./Icon"
 import styles from "./FundsFlow.module.css"
+import { Icon } from "./Icon"
 
 type Step = "pending" | "held" | "done" | "blocked"
 

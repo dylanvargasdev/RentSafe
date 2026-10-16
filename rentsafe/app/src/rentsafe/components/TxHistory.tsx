@@ -2,8 +2,8 @@ import { stellarNetwork } from "@stellar-scaffold/app-lib"
 import { formatDateTime } from "../dates"
 import { type TxRecord } from "../types"
 import { Icon } from "./Icon"
-import { Badge } from "./ui"
 import styles from "./TxHistory.module.css"
+import { Badge } from "./ui"
 
 const net = stellarNetwork === "PUBLIC" ? "public" : "testnet"
 

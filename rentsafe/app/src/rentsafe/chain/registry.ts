@@ -31,16 +31,72 @@ type Method = (
 	opts?: { publicKey?: string },
 ) => Promise<Assembled>
 
-interface RegistryClient {
-	options: { contractId: string }
-	request: Method
-	accept: Method
-	reject: Method
-	cancel: Method
-	link_escrow: Method
-	complete: Method
-	open_dispute: Method
-	get_booking: Method
+/** Writes: signed by the user's wallet. */
+type WriteMethod =
+	| "request"
+	| "accept"
+	| "reject"
+	| "cancel"
+	| "link_escrow"
+	| "complete"
+	| "open_dispute"
+	| "resolve_dispute"
+	| "review"
+
+/** Reads: free simulations, no wallet needed. */
+type ReadMethod =
+	| "get_booking"
+	| "bookings_of"
+	| "get_review"
+	| "reviews_of"
+	| "score_of"
+
+type RegistryClient = { options: { contractId: string } } & Record<
+	WriteMethod | ReadMethod,
+	Method
+>
+
+/** On-chain status names (`Status` enum in the contract). */
+export type ChainStatus =
+	| "Requested"
+	| "Accepted"
+	| "Rejected"
+	| "Cancelled"
+	| "EscrowLinked"
+	| "Completed"
+	| "Disputed"
+	| "Resolved"
+
+/** `Booking` struct of the contract, as the generated client decodes it. */
+export interface ChainBooking {
+	id: number
+	listing_id: string
+	tenant: string
+	owner: string
+	start: bigint
+	end: bigint
+	rent: bigint
+	deposit: bigint
+	fee: bigint
+	status: { tag: ChainStatus } | ChainStatus
+	escrow?: string
+	arbiter?: string
+	created_at: bigint
+	updated_at: bigint
+}
+
+export interface ChainReview {
+	booking_id: number
+	reviewer: string
+	subject: string
+	rating: number
+	comment: string
+	timestamp: bigint
+}
+
+export interface ChainScore {
+	count: number
+	total: number
 }
 
 const isResult = (v: unknown): v is ContractResult<unknown> =>
@@ -57,12 +113,16 @@ export const registry: RegistryClient | undefined = (
 
 export const registryContractId = registry?.options.contractId
 
+/** Status of a decoded booking, whatever shape the client used for the enum. */
+export const statusOf = (b: ChainBooking): ChainStatus =>
+	typeof b.status === "string" ? b.status : b.status.tag
+
 /**
  * Simulate → check contract errors (before any wallet popup) → sign with the
  * user's wallet → send. Returns the tx hash and the function's return value.
  */
 export async function callRegistry<T = unknown>(
-	method: keyof Omit<RegistryClient, "options">,
+	method: WriteMethod,
 	args: Record<string, unknown>,
 	publicKey: string,
 	signTransaction: SignTransactionFn,
@@ -81,4 +141,21 @@ export async function callRegistry<T = unknown>(
 		? (sent.result.unwrap() as T)
 		: (sent.result as T)
 	return { hash, value }
+}
+
+/** Read-only call (a simulation): no signature, no fee. */
+export async function readRegistry<T>(
+	method: ReadMethod,
+	args: Record<string, unknown>,
+): Promise<T> {
+	if (!registry)
+		throw new Error(
+			"El contrato rental_registry no está desplegado en esta red.",
+		)
+	const tx = await registry[method](args)
+	if (isResult(tx.result)) {
+		if (tx.result.isErr()) throw new Error(tx.result.unwrapErr().message)
+		return tx.result.unwrap() as T
+	}
+	return tx.result as T
 }

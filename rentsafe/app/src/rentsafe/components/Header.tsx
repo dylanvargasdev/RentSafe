@@ -1,11 +1,13 @@
 import { useEffect, useRef, useState, type FormEvent } from "react"
 import { Link, NavLink, useLocation, useNavigate } from "react-router-dom"
+import { useWallet } from "../../hooks/useWallet"
+import { platformAddress } from "../../trustless/config"
 import { CATEGORIES } from "../categories"
 import { actions, useRentSafe, useSession } from "../store/useRentSafe"
+import styles from "./Header.module.css"
 import { Icon } from "./Icon"
 import { Avatar } from "./ui"
 import { WalletMenu } from "./WalletMenu"
-import styles from "./Header.module.css"
 
 export const Logo = () => (
 	<Link to="/" className={styles.logo} aria-label="RentSafe, inicio">
@@ -34,6 +36,7 @@ export const Logo = () => (
 const AccountMenu = () => {
 	const session = useSession()
 	const { bookings } = useRentSafe()
+	const { address } = useWallet()
 	const [open, setOpen] = useState(false)
 	const ref = useRef<HTMLDivElement>(null)
 	const navigate = useNavigate()
@@ -60,6 +63,7 @@ const AccountMenu = () => {
 			</Link>
 		)
 
+	const isArbiter = Boolean(platformAddress && address === platformAddress)
 	const pendingForMe = bookings.filter(
 		(b) => b.ownerId === session.userId && b.status === "requested",
 	).length
@@ -116,12 +120,17 @@ const AccountMenu = () => {
 					<Link role="menuitem" to="/perfil">
 						Perfil y billetera
 					</Link>
+					{isArbiter && (
+						<Link role="menuitem" to="/arbitro">
+							Disputas (árbitro)
+						</Link>
+					)}
 					<hr />
 					<button
 						role="menuitem"
 						onClick={() => {
 							actions.signOut()
-							navigate("/")
+							void navigate("/")
 						}}
 					>
 						Cerrar sesión
@@ -137,7 +146,9 @@ const HeaderSearch = () => {
 	const [q, setQ] = useState("")
 	const submit = (e: FormEvent) => {
 		e.preventDefault()
-		navigate(q.trim() ? `/buscar?q=${encodeURIComponent(q.trim())}` : "/buscar")
+		void navigate(
+			q.trim() ? `/buscar?q=${encodeURIComponent(q.trim())}` : "/buscar",
+		)
 	}
 	return (
 		<form className={styles.search} onSubmit={submit} role="search">

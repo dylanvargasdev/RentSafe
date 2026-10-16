@@ -37,7 +37,8 @@ export const CostSummary = ({
 			<dt>
 				Comisión de servicio ({RENTSAFE.serviceFeePercent}%)
 				<span className={styles.note}>
-					Parámetro de demostración, configurable
+					Va a la plataforma desde el escrow cuando confirmas la entrega
+					(parámetro de demostración)
 				</span>
 			</dt>
 			<dd className="num">{money(quote.fee)}</dd>

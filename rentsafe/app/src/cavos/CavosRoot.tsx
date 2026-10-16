@@ -33,10 +33,9 @@ export const CavosRoot = ({ children }: { children: ReactNode }) => {
 				redirectUri: window.location.origin,
 			}}
 			modal={{
-				appName: "Scaffold Pura Vida",
+				appName: "RentSafe",
 				providers: ["email", "google"],
-				emailMode: "otp",
-				primaryColor: "#7b61ff",
+				primaryColor: "#0e5a43",
 			}}
 		>
 			<CavosBridge>{children}</CavosBridge>

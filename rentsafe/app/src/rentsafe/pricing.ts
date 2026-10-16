@@ -40,7 +40,7 @@ export interface Quote {
 	deposit: number
 	fee: number
 	total: number
-	/** Amount that goes into the escrow (rent + deposit). */
+	/** Amount that goes into the escrow (rent + deposit + fee). */
 	escrowAmount: number
 	error?: string
 }
@@ -74,7 +74,7 @@ export function quote(
 		deposit,
 		fee,
 		total: round2(rent + fee + deposit),
-		escrowAmount: round2(rent + deposit),
+		escrowAmount: round2(rent + deposit + fee),
 		error,
 	}
 }
@@ -106,6 +106,25 @@ export function isFree(
 			BLOCKING.includes(b.status) &&
 			overlaps(start, end, b.start, b.end),
 	)
+}
+
+/**
+ * First start date (from tomorrow, up to ~4 months ahead) where a booking of
+ * `units` fits: the booking widget opens on free dates instead of on a
+ * conflict. Falls back to tomorrow.
+ */
+export function firstFreeStart(
+	listing: Listing,
+	bookings: Booking[],
+	units: number,
+	from: string,
+) {
+	for (let i = 0; i < 120; i++) {
+		const start = addDays(from, i)
+		if (isFree(listing, bookings, start, endFor(listing, start, units)))
+			return start
+	}
+	return from
 }
 
 /** Earned label: rating ≥ 4.8 with at least 3 reviews. */

@@ -1,17 +1,10 @@
 import { useMemo, useState } from "react"
 import { Link, useLocation, useNavigate, useParams } from "react-router-dom"
 import { ATTRIBUTE_LABELS, categoryById, unitLabel } from "../categories"
-import { money } from "../config"
-import {
-	addDays,
-	formatDate,
-	formatDateLong,
-	formatRange,
-	today,
-} from "../dates"
 import { CostSummary } from "../components/CostSummary"
 import { Icon } from "../components/Icon"
 import { FavoriteButton } from "../components/ListingCard"
+import { WalletReputation } from "../components/OnchainReviews"
 import { RequestDialog } from "../components/RequestDialog"
 import {
 	Avatar,
@@ -22,8 +15,18 @@ import {
 	Photo,
 	Rating,
 } from "../components/ui"
+import { money } from "../config"
+import {
+	addDays,
+	formatDate,
+	formatDateLong,
+	formatRange,
+	today,
+} from "../dates"
 import {
 	BLOCKING,
+	endFor,
+	firstFreeStart,
 	isFeatured,
 	isFree,
 	periodKind,
@@ -128,12 +131,14 @@ const BookingWidget = ({ listing }: { listing: Listing }) => {
 	const navigate = useNavigate()
 	const { pathname } = useLocation()
 	const kind = periodKind(listing)
-	const tomorrow = addDays(today(), 1)
-	const [start, setStart] = useState(tomorrow)
-	const [end, setEnd] = useState(
-		addDays(tomorrow, Math.max(listing.minUnits, 1)),
+	const minUnits = Math.max(listing.minUnits, 1)
+	// Open on the first free dates, not on a conflict with existing bookings.
+	const [firstStart] = useState(() =>
+		firstFreeStart(listing, state.bookings, minUnits, addDays(today(), 1)),
 	)
-	const [units, setUnits] = useState(Math.max(listing.minUnits, 1))
+	const [start, setStart] = useState(firstStart)
+	const [end, setEnd] = useState(endFor(listing, firstStart, minUnits))
+	const [units, setUnits] = useState(minUnits)
 	const [open, setOpen] = useState(false)
 
 	const q = useMemo(
@@ -154,7 +159,7 @@ const BookingWidget = ({ listing }: { listing: Listing }) => {
 
 	const request = () => {
 		if (!session) {
-			navigate(`/entrar?siguiente=${encodeURIComponent(pathname)}`)
+			void navigate(`/entrar?siguiente=${encodeURIComponent(pathname)}`)
 			return
 		}
 		setOpen(true)
@@ -340,6 +345,9 @@ export const ListingPage = () => {
 						)}
 					</section>
 					{owner?.bio && <p className={styles.bio}>{owner.bio}</p>}
+					{owner?.payoutAddress && (
+						<WalletReputation address={owner.payoutAddress} />
+					)}
 
 					<section className={styles.block}>
 						<h2 className={styles.h2}>Descripción</h2>

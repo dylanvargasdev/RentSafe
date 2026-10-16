@@ -3,10 +3,11 @@ import { Link } from "react-router-dom"
 import { useWallet } from "../../hooks/useWallet"
 import { heldInEscrow, ownerEarned, ownerPending } from "../bookingStatus"
 import { categoryById, unitLabel } from "../categories"
-import { money } from "../config"
 import { BookingRow } from "../components/BookingRow"
 import { Icon } from "../components/Icon"
+import { SyncNote } from "../components/SyncNote"
 import { Badge, Callout, EmptyState, Photo } from "../components/ui"
+import { money } from "../config"
 import { actions, ME, useRentSafe, useSession } from "../store/useRentSafe"
 import styles from "./OwnerDashboard.module.css"
 
@@ -59,12 +60,13 @@ export const OwnerDashboard = () => {
 	return (
 		<div className="rs-container section">
 			<div className="spread">
-				<div>
+				<div style={{ flex: "1 1 320px", minWidth: 0 }}>
 					<h1 style={{ fontSize: "1.8rem" }}>Panel de propietario</h1>
 					<p className="muted" style={{ marginTop: 4 }}>
 						Hola, {session.name.split(" ")[0]}. Administra tus bienes,
 						solicitudes y cobros.
 					</p>
+					<SyncNote />
 				</div>
 				<Link to="/propietario/publicar" className="btn btn-primary">
 					<Icon name="plus" size={18} />

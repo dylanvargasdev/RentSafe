@@ -1,21 +1,26 @@
 /**
  * Every booking transition, for the three modes:
  *
- * - onchain: Trustless Work multi-release escrow (2 milestones) + the
- *   rental_registry Soroban contract. Every write is signed by the user's
- *   wallet through useWallet().signTransaction (Cavos or extension).
+ * - onchain: Trustless Work multi-release escrow + the rental_registry Soroban
+ *   contract. Every write is signed by the user's wallet through
+ *   useWallet().signTransaction (Cavos or extension).
  * - simulated / demo: same transitions, no blockchain, refs start with "SIM-".
  *
- * Escrow design (per booking):
- *   milestone 0 "Alquiler"  → receiver = owner
- *   milestone 1 "Depósito"  → receiver = tenant (refund)
- *   approver        = tenant  (confirms receipt / agrees to the refund)
- *   serviceProvider = owner   (registers the return, with notes as evidence)
- *   releaseSigner   = owner   (releases each approved milestone)
- *   disputeResolver = platform (PUBLIC_PLATFORM_ADDRESS, or tenant in demo mode)
- * So the owner can't collect rent without the tenant's approval, and the
- * deposit refund needs the tenant's approval plus the owner's release; any
- * disagreement goes to the platform arbiter, who splits the deposit.
+ * Escrow design (per booking, see milestones.ts):
+ *   milestone 0 "Alquiler"           → receiver = owner
+ *   milestone 1 "Depósito"           → receiver = tenant (refund)
+ *   milestone n "Comisión RentSafe"  → receiver = platform (only if fee > 0)
+ *   approver        = tenant   (confirms receipt / agrees to the refund)
+ *   serviceProvider = owner    (registers the return, with notes as evidence)
+ *   releaseSigner   = owner    (releases each approved milestone)
+ *   disputeResolver = platform (PUBLIC_PLATFORM_ADDRESS, never a party)
+ *   platformAddress = platform (platformFee 0: the fee is its own milestone)
+ * rental_registry.link_escrow reads the escrow on-chain and rejects it if any
+ * of this doesn't match the booking.
+ *
+ * Ordering rule: the chain goes first and the local mirror is only updated
+ * after each on-chain step succeeded. Multi-step actions remember which steps
+ * already happened, so retrying an action never repeats a signed step.
  */
 import { networkPassphrase } from "@stellar-scaffold/app-lib"
 import {
@@ -31,11 +36,12 @@ import { useCallback, useState } from "react"
 import { useNotification } from "../../hooks/useNotification"
 import { useWallet } from "../../hooks/useWallet"
 import { errorMessage } from "../../lib/errors"
-import { platformAddress, platformOr, USDC } from "../../trustless/config"
+import { platformAddress, USDC } from "../../trustless/config"
 import { useEscrowTx } from "../../trustless/useEscrowTx"
 import { RENTSAFE } from "../config"
 import { toUnix } from "../dates"
 import { type Quote } from "../pricing"
+import { store } from "../store/store"
 import {
 	actions,
 	ME,
@@ -43,19 +49,27 @@ import {
 	useRentSafe,
 	useSession,
 } from "../store/useRentSafe"
-import { store } from "../store/store"
 import {
 	type Booking,
 	type BookingMode,
 	type Listing,
 	type TxRecord,
 } from "../types"
+import {
+	deliveryDisputeMilestones,
+	depositIndex,
+	escrowTotal,
+	feeIndex,
+	milestoneAmount,
+	RENT_INDEX,
+} from "./milestones"
 import { callRegistry, registry } from "./registry"
 
-const stroops = (n: number) => BigInt(Math.round(n * 1e7))
+export const stroops = (n: number) => BigInt(Math.round(n * 1e7))
 const simRef = () =>
 	`SIM-${Math.random().toString(16).slice(2, 10).toUpperCase()}`
 const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms))
+const round2 = (n: number) => Math.round(n * 100) / 100
 const TYPE = "multi-release" as const
 
 export type ActionId =
@@ -63,12 +77,15 @@ export type ActionId =
 	| "reject"
 	| "cancel"
 	| "fund"
+	| "markDelivered"
 	| "confirmReceipt"
 	| "releaseRent"
 	| "registerReturn"
 	| "approveDeposit"
 	| "releaseDeposit"
+	| "complete"
 	| "dispute"
+	| "disputeDelivery"
 	| "resolve"
 
 export type Role = "tenant" | "owner" | "resolver"
@@ -81,6 +98,12 @@ export interface ActionDef {
 	variant?: "primary" | "danger"
 	input?: "notes" | "reason" | "split"
 }
+
+/** Everything that has to be paid out before the booking can be closed. */
+const allReleased = (b: Booking) =>
+	b.rentReleased &&
+	(b.deposit === 0 || b.depositReleased) &&
+	(b.fee === 0 || Boolean(b.feeReleased))
 
 /** Actions that make sense in the booking's current state (any role). */
 export function availableActions(b: Booking): ActionDef[] {
@@ -104,7 +127,7 @@ export function availableActions(b: Booking): ActionDef[] {
 			},
 		)
 	}
-	if (s === "requested" || s === "accepted") {
+	if ((s === "requested" || s === "accepted") && !b.escrowLinked) {
 		out.push({
 			id: "cancel",
 			role: "tenant",
@@ -125,22 +148,43 @@ export function availableActions(b: Booking): ActionDef[] {
 		out.push({
 			id: "fund",
 			role: "tenant",
-			label: "Depositar en garantía",
+			label: b.escrowLinked ? "Completar el depósito" : "Depositar en garantía",
 			help: "Crea el escrow y deposita alquiler + depósito. El propietario aún no recibe nada.",
 			variant: "primary",
 		})
-	if (s === "funded")
-		out.push({
-			id: "confirmReceipt",
-			role: "tenant",
-			label: "Confirmar que recibí el bien",
-			help: "Aprueba el pago del alquiler. El propietario podrá cobrarlo.",
-			variant: "primary",
-		})
+	if (s === "funded") {
+		if (!delivered(b))
+			out.push({
+				id: "markDelivered",
+				role: "owner",
+				label: "Marcar como entregado",
+				help: "Indica que entregaste el bien. El arrendatario lo confirma y luego puedes cobrar.",
+				variant: "primary",
+				input: "notes",
+			})
+		else
+			out.push({
+				id: "confirmReceipt",
+				role: "tenant",
+				label: "Confirmar que recibí el bien",
+				help: "Aprueba el pago del alquiler. El propietario podrá cobrarlo.",
+				variant: "primary",
+			})
+		if (!b.approved[0])
+			out.push({
+				id: "disputeDelivery",
+				role: "tenant",
+				label: "No recibí el bien (disputa)",
+				help: "Congela alquiler y depósito en el escrow hasta que el árbitro decida.",
+				variant: "danger",
+				input: "reason",
+			})
+	}
 	if (
 		["active", "return_review", "disputed"].includes(s) &&
 		b.approved[0] &&
-		!b.rentReleased
+		(!b.rentReleased || (b.fee > 0 && !b.feeReleased)) &&
+		b.disputeKind !== "delivery"
 	)
 		out.push({
 			id: "releaseRent",
@@ -157,11 +201,7 @@ export function availableActions(b: Booking): ActionDef[] {
 			help: "Deja constancia del estado en que recibiste el bien.",
 			input: "notes",
 		})
-	if (
-		["active", "return_review"].includes(s) &&
-		b.deposit > 0 &&
-		!b.approved[1]
-	)
+	if (s === "return_review" && b.deposit > 0 && !b.approved[1])
 		out.push({
 			id: "approveDeposit",
 			role: "tenant",
@@ -179,6 +219,14 @@ export function availableActions(b: Booking): ActionDef[] {
 			role: "owner",
 			label: "Devolver depósito",
 			help: "El bien volvió en buen estado: el depósito regresa al arrendatario.",
+			variant: "primary",
+		})
+	if (s === "return_review" && b.mode === "onchain" && allReleased(b))
+		out.push({
+			id: "complete",
+			role: "owner",
+			label: "Cerrar la reserva on-chain",
+			help: "Todos los fondos ya se liberaron: marca la reserva como completada en el registro.",
 			variant: "primary",
 		})
 	if (
@@ -203,12 +251,25 @@ export function availableActions(b: Booking): ActionDef[] {
 			id: "resolve",
 			role: "resolver",
 			label: "Resolver disputa",
-			help: "Reparte el depósito entre propietario y arrendatario.",
+			help:
+				b.disputeKind === "delivery"
+					? "Reparte el alquiler; el depósito y la comisión vuelven al arrendatario."
+					: "Reparte el depósito entre propietario y arrendatario.",
 			variant: "primary",
 			input: "split",
 		})
 	return out
 }
+
+/** The owner set the delivery status on every milestone the tenant approves on receipt. */
+export const delivered = (b: Booking) =>
+	[RENT_INDEX, feeIndex(b)].every(
+		(i) => i === undefined || Boolean(b.statusSet?.includes(i)),
+	)
+
+/** The milestone the arbiter splits (the others in a delivery dispute go back to the tenant). */
+export const disputedMain = (b: Booking) =>
+	b.disputeKind === "delivery" ? RENT_INDEX : (depositIndex(b) ?? RENT_INDEX)
 
 export interface ActionInput {
 	notes?: string
@@ -338,11 +399,15 @@ export function useBookingFlow(booking: Booking | undefined) {
 	const execute = useCallback(
 		async (id: ActionId, role: Role, input: ActionInput = {}) => {
 			if (!booking) return
-			const b = store.get().bookings.find((x) => x.id === booking.id) ?? booking
+			/** Always act on the latest stored copy (retries see completed steps). */
+			const latest = () =>
+				store.get().bookings.find((x) => x.id === booking.id) ?? booking
+			const b = latest()
 			const onchain = b.mode === "onchain"
 			const useRegistry = onchain && registry && b.registryId !== undefined
 			const regId = b.registryId
 			const contractId = b.escrowId
+			const fee = feeIndex(b)
 			const listingTitle = (x: Booking) =>
 				state.listings.find((l) => l.id === x.listingId)?.title ?? x.listingId
 			/** Transitions that don't move money: logged, simulated or off-chain. */
@@ -356,6 +421,38 @@ export function useBookingFlow(booking: Booking | undefined) {
 					return
 				}
 				await simStep(x.id, `${label} (simulado)`)
+			}
+			const approve = (index: number) => () =>
+				approveMilestone(
+					{
+						contractId: contractId!,
+						milestoneIndex: String(index),
+						approver: address!,
+					},
+					TYPE,
+				)
+			const release = (index: number) => () =>
+				releaseFunds(
+					{
+						contractId: contractId!,
+						releaseSigner: address!,
+						milestoneIndex: String(index),
+					},
+					TYPE,
+				)
+			/**
+			 * Close the booking once it was returned and every milestone was paid
+			 * out. On-chain: the registry first, then the local mirror.
+			 */
+			const maybeComplete = async () => {
+				const x = latest()
+				if (x.status !== "return_review" || !allReleased(x)) return
+				if (useRegistry)
+					await registryStep(x.id, "Reserva completada on-chain", "complete", {
+						owner: address,
+						id: regId,
+					})
+				actions.updateBooking(x.id, { status: "completed" })
 			}
 			setBusy(id)
 			try {
@@ -397,9 +494,15 @@ export function useBookingFlow(booking: Booking | undefined) {
 						break
 					}
 					case "fund": {
+						const total = escrowTotal(b)
 						if (onchain) {
+							if (!b.resolverAddress)
+								throw new Error(
+									"Esta reserva no tiene árbitro de la plataforma (PUBLIC_PLATFORM_ADDRESS).",
+								)
 							let escrowId = b.escrowId
 							if (!escrowId) {
+								const platform = b.resolverAddress
 								const deployed = await escrowStep(
 									b.id,
 									"Escrow creado en Stellar",
@@ -407,15 +510,15 @@ export function useBookingFlow(booking: Booking | undefined) {
 										deployEscrow(
 											{
 												signer: address!,
-												engagementId: `rentsafe-${b.id}`,
+												engagementId: `rentsafe-${regId ?? b.id}`,
 												title: `RentSafe · ${listingTitle(b)}`.slice(0, 100),
-												description: `Alquiler ${b.start} → ${b.end}. Hito 1: alquiler al propietario. Hito 2: depósito de garantía de vuelta al arrendatario.`,
+												description: `Alquiler ${b.start} → ${b.end}. Hito 1: alquiler al propietario. Hito 2: depósito de garantía de vuelta al arrendatario.${b.fee > 0 ? " Hito 3: comisión de RentSafe." : ""}`,
 												roles: {
 													approver: b.tenantAddress!,
 													serviceProvider: b.ownerAddress!,
 													releaseSigner: b.ownerAddress!,
-													disputeResolver: b.resolverAddress!,
-													platformAddress: b.resolverAddress!,
+													disputeResolver: platform,
+													platformAddress: platform,
 												},
 												platformFee: 0,
 												trustline: {
@@ -437,6 +540,15 @@ export function useBookingFlow(booking: Booking | undefined) {
 																},
 															]
 														: []),
+													...(b.fee > 0
+														? [
+																{
+																	description: "Comisión RentSafe",
+																	amount: b.fee,
+																	receiver: platform,
+																},
+															]
+														: []),
 												],
 											},
 											TYPE,
@@ -450,7 +562,7 @@ export function useBookingFlow(booking: Booking | undefined) {
 							if (useRegistry && !b.escrowLinked) {
 								await registryStep(
 									b.id,
-									"Escrow vinculado a la reserva on-chain",
+									"Escrow verificado y vinculado a la reserva on-chain",
 									"link_escrow",
 									{
 										tenant: address,
@@ -462,12 +574,12 @@ export function useBookingFlow(booking: Booking | undefined) {
 							}
 							await escrowStep(
 								b.id,
-								`Depósito de ${b.rent + b.deposit} USDC en el escrow`,
+								`Depósito de ${total} USDC en el escrow`,
 								() =>
 									fundEscrow(
 										{
 											contractId: escrowId!,
-											amount: b.rent + b.deposit,
+											amount: total,
 											signer: address!,
 										},
 										TYPE,
@@ -477,74 +589,113 @@ export function useBookingFlow(booking: Booking | undefined) {
 						} else
 							await simStep(
 								b.id,
-								`Depósito de ${b.rent + b.deposit} ${RENTSAFE.currency} en el escrow (simulado)`,
+								`Depósito de ${total} ${RENTSAFE.currency} en el escrow (simulado)`,
 							)
 						actions.updateBooking(b.id, { status: "funded" })
 						break
 					}
+					case "markDelivered": {
+						const notes = input.notes?.trim() || "Bien entregado"
+						const targets = [RENT_INDEX, fee].filter(
+							(i): i is number => i !== undefined,
+						)
+						if (onchain) {
+							for (const index of targets) {
+								if (latest().statusSet?.includes(index)) continue
+								await escrowStep(
+									b.id,
+									index === RENT_INDEX
+										? "Entrega registrada en el escrow"
+										: "Comisión marcada como lista en el escrow",
+									() =>
+										changeMilestoneStatus(
+											{
+												contractId: contractId!,
+												milestoneIndex: String(index),
+												newStatus: "entregado",
+												newEvidence: notes.slice(0, 200),
+												serviceProvider: address!,
+											},
+											TYPE,
+										),
+								)
+								actions.updateBooking(b.id, {
+									statusSet: [...(latest().statusSet ?? []), index],
+								})
+							}
+						} else await simStep(b.id, "Entrega registrada (simulado)")
+						actions.updateBooking(b.id, {
+							statusSet: [
+								...new Set([...(latest().statusSet ?? []), ...targets]),
+							],
+						})
+						break
+					}
 					case "confirmReceipt": {
-						if (onchain)
-							await escrowStep(
-								b.id,
-								"Entrega confirmada (hito de alquiler aprobado)",
-								() =>
-									approveMilestone(
-										{
-											contractId: contractId!,
-											milestoneIndex: "0",
-											approver: address!,
-										},
-										TYPE,
-									),
-							)
-						else await simStep(b.id, "Entrega confirmada (simulado)")
+						if (onchain) {
+							if (!b.approved[0]) {
+								await escrowStep(
+									b.id,
+									"Entrega confirmada (hito de alquiler aprobado)",
+									approve(RENT_INDEX),
+								)
+								actions.updateBooking(b.id, {
+									approved: [true, latest().approved[1]],
+								})
+							}
+							if (fee !== undefined && !b.feeApproved) {
+								await escrowStep(
+									b.id,
+									"Comisión de la plataforma aprobada",
+									approve(fee),
+								)
+								actions.updateBooking(b.id, { feeApproved: true })
+							}
+						} else await simStep(b.id, "Entrega confirmada (simulado)")
 						actions.updateBooking(b.id, {
 							status: "active",
-							approved: [true, b.approved[1]],
+							approved: [true, latest().approved[1]],
+							...(fee !== undefined ? { feeApproved: true } : {}),
 						})
 						break
 					}
 					case "releaseRent": {
-						if (onchain)
-							await escrowStep(
-								b.id,
-								`Alquiler de ${b.rent} USDC liberado al propietario`,
-								() =>
-									releaseFunds(
-										{
-											contractId: contractId!,
-											releaseSigner: address!,
-											milestoneIndex: "0",
-										},
-										TYPE,
-									),
-							)
-						else
-							await simStep(b.id, `Alquiler liberado al propietario (simulado)`)
-						const done =
-							b.status === "return_review" &&
-							(b.depositReleased || b.deposit === 0)
-						actions.updateBooking(b.id, {
-							rentReleased: true,
-							...(done ? { status: "completed" } : {}),
-						})
-						if (done && useRegistry)
-							await registryStep(
-								b.id,
-								"Reserva completada on-chain",
-								"complete",
-								{ owner: address, id: regId },
-							)
+						if (onchain) {
+							if (!b.rentReleased) {
+								await escrowStep(
+									b.id,
+									`Alquiler de ${b.rent} USDC liberado al propietario`,
+									release(RENT_INDEX),
+								)
+								actions.updateBooking(b.id, { rentReleased: true })
+							}
+							if (fee !== undefined && !b.feeReleased) {
+								await escrowStep(
+									b.id,
+									`Comisión de ${b.fee} USDC liberada a la plataforma`,
+									release(fee),
+								)
+								actions.updateBooking(b.id, { feeReleased: true })
+							}
+						} else {
+							await simStep(b.id, "Alquiler liberado al propietario (simulado)")
+							actions.updateBooking(b.id, {
+								rentReleased: true,
+								...(fee !== undefined ? { feeReleased: true } : {}),
+							})
+						}
+						await maybeComplete()
 						break
 					}
 					case "registerReturn": {
 						const notes = input.notes?.trim() || "Bien devuelto"
-						if (onchain && b.deposit > 0)
+						const dep = depositIndex(b)
+						if (onchain && dep !== undefined)
 							await escrowStep(b.id, "Devolución registrada en el escrow", () =>
 								changeMilestoneStatus(
 									{
 										contractId: contractId!,
-										milestoneIndex: "1",
+										milestoneIndex: String(dep),
 										newStatus: "devuelto",
 										newEvidence: notes.slice(0, 200),
 										serviceProvider: address!,
@@ -554,34 +705,27 @@ export function useBookingFlow(booking: Booking | undefined) {
 							)
 						else if (!onchain)
 							await simStep(b.id, "Devolución registrada (simulado)")
-						const done = b.deposit === 0 && b.rentReleased
 						actions.updateBooking(b.id, {
-							status: done ? "completed" : "return_review",
+							status: "return_review",
 							returnNotes: notes,
+							...(dep !== undefined
+								? {
+										statusSet: [
+											...new Set([...(latest().statusSet ?? []), dep]),
+										],
+									}
+								: {}),
 						})
-						if (done && useRegistry)
-							await registryStep(
-								b.id,
-								"Reserva completada on-chain",
-								"complete",
-								{ owner: address, id: regId },
-							)
+						await maybeComplete()
 						break
 					}
 					case "approveDeposit": {
-						if (onchain)
+						const dep = depositIndex(b)
+						if (onchain && dep !== undefined)
 							await escrowStep(
 								b.id,
 								"Devolución del depósito aprobada por el arrendatario",
-								() =>
-									approveMilestone(
-										{
-											contractId: contractId!,
-											milestoneIndex: "1",
-											approver: address!,
-										},
-										TYPE,
-									),
+								approve(dep),
 							)
 						else
 							await simStep(b.id, "Devolución del depósito aprobada (simulado)")
@@ -589,56 +733,59 @@ export function useBookingFlow(booking: Booking | undefined) {
 						break
 					}
 					case "releaseDeposit": {
-						if (onchain)
+						const dep = depositIndex(b)
+						if (onchain && dep !== undefined)
 							await escrowStep(
 								b.id,
 								`Depósito de ${b.deposit} USDC devuelto al arrendatario`,
-								() =>
-									releaseFunds(
-										{
-											contractId: contractId!,
-											releaseSigner: address!,
-											milestoneIndex: "1",
-										},
-										TYPE,
-									),
+								release(dep),
 							)
 						else
 							await simStep(
 								b.id,
 								"Depósito devuelto al arrendatario (simulado)",
 							)
-						const done = b.rentReleased
-						actions.updateBooking(b.id, {
-							depositReleased: true,
-							...(done ? { status: "completed" } : {}),
-						})
-						if (done && useRegistry)
-							await registryStep(
-								b.id,
-								"Reserva completada on-chain",
-								"complete",
-								{ owner: address, id: regId },
-							)
+						actions.updateBooking(b.id, { depositReleased: true })
+						await maybeComplete()
 						break
 					}
-					case "dispute": {
+					case "complete": {
+						await maybeComplete()
+						break
+					}
+					case "dispute":
+					case "disputeDelivery": {
 						const reason = input.reason?.trim()
 						if (!reason) throw new Error("Describe el motivo de la disputa.")
+						const kind = id === "disputeDelivery" ? "delivery" : "deposit"
+						const targets =
+							kind === "delivery"
+								? deliveryDisputeMilestones(b)
+								: [depositIndex(b)!]
 						if (onchain) {
-							await escrowStep(
-								b.id,
-								"Disputa abierta en el escrow (depósito bloqueado)",
-								() =>
-									startDispute(
-										{
-											contractId: contractId!,
-											milestoneIndex: "1",
-											signer: address!,
-										},
-										TYPE,
-									),
-							)
+							for (const index of targets) {
+								if (latest().disputedMilestones?.includes(index)) continue
+								await escrowStep(
+									b.id,
+									`Disputa abierta en el escrow (hito ${index + 1} bloqueado)`,
+									() =>
+										startDispute(
+											{
+												contractId: contractId!,
+												milestoneIndex: String(index),
+												signer: address!,
+											},
+											TYPE,
+										),
+								)
+								actions.updateBooking(b.id, {
+									disputeKind: kind,
+									disputedMilestones: [
+										...(latest().disputedMilestones ?? []),
+										index,
+									],
+								})
+							}
 							if (useRegistry)
 								await registryStep(
 									b.id,
@@ -649,32 +796,72 @@ export function useBookingFlow(booking: Booking | undefined) {
 						} else await simStep(b.id, "Disputa abierta (simulado)")
 						actions.updateBooking(b.id, {
 							status: "disputed",
+							disputeKind: kind,
+							disputedMilestones: targets,
 							disputeReason: `${role === "owner" ? "Propietario" : "Arrendatario"}: ${reason}`,
 						})
 						break
 					}
 					case "resolve": {
-						const toOwner = Math.min(Math.max(input.toOwner ?? 0, 0), b.deposit)
-						const toTenant = Math.round((b.deposit - toOwner) * 100) / 100
-						if (onchain)
-							await escrowStep(
-								b.id,
-								`Disputa resuelta: ${toOwner} al propietario, ${toTenant} al arrendatario`,
-								() =>
-									resolveDispute(
-										{
-											contractId: contractId!,
-											milestoneIndex: "1",
-											disputeResolver: address!,
-											distributions: [
+						const main = disputedMain(b)
+						const mainAmount = milestoneAmount(b, main)
+						const toOwner = round2(
+							Math.min(Math.max(input.toOwner ?? 0, 0), mainAmount),
+						)
+						const toTenant = round2(mainAmount - toOwner)
+						const targets = b.disputedMilestones?.length
+							? b.disputedMilestones
+							: [main]
+						if (onchain) {
+							for (const index of targets) {
+								if (latest().resolvedMilestones?.includes(index)) continue
+								const amount = milestoneAmount(b, index)
+								// Only the main milestone is split; in a delivery dispute
+								// the deposit and the fee simply go back to the tenant.
+								const distributions = (
+									index === main
+										? [
 												{ address: b.ownerAddress!, amount: toOwner },
 												{ address: b.tenantAddress!, amount: toTenant },
-											].filter((d) => d.amount > 0),
-										},
-										TYPE,
-									),
-							)
-						else
+											]
+										: [{ address: b.tenantAddress!, amount }]
+								).filter((d) => d.amount > 0)
+								await escrowStep(
+									b.id,
+									index === main
+										? `Disputa resuelta: ${toOwner} al propietario, ${toTenant} al arrendatario`
+										: `Hito ${index + 1} devuelto al arrendatario (${amount} USDC)`,
+									() =>
+										resolveDispute(
+											{
+												contractId: contractId!,
+												milestoneIndex: String(index),
+												disputeResolver: address!,
+												// The SDK 3.0.5 types declare a 1-tuple, but the API
+												// accepts any number of distributions.
+												distributions: distributions as unknown as [
+													{ address: string; amount: number },
+												],
+											},
+											TYPE,
+										),
+								)
+								actions.updateBooking(b.id, {
+									resolution: { toOwner, toTenant },
+									resolvedMilestones: [
+										...(latest().resolvedMilestones ?? []),
+										index,
+									],
+								})
+							}
+							if (useRegistry)
+								await registryStep(
+									b.id,
+									"Disputa cerrada en el registro on-chain",
+									"resolve_dispute",
+									{ caller: address, id: regId },
+								)
+						} else
 							await simStep(
 								b.id,
 								`Disputa resuelta: ${toOwner} al propietario, ${toTenant} al arrendatario (simulado)`,
@@ -683,6 +870,7 @@ export function useBookingFlow(booking: Booking | undefined) {
 							status: "resolved",
 							depositReleased: true,
 							resolution: { toOwner, toTenant },
+							resolvedMilestones: targets,
 						})
 						break
 					}
@@ -762,67 +950,44 @@ export function useCreateRequest() {
 				}
 				if (!address)
 					throw new Error("Conecta tu billetera para usar el modo on-chain.")
+				if (!platformAddress)
+					throw new Error(
+						"Falta PUBLIC_PLATFORM_ADDRESS en app/.env: el modo on-chain necesita un árbitro de disputas independiente.",
+					)
+				if (!registry)
+					throw new Error(
+						"El contrato rental_registry no está desplegado: ejecuta npm run contracts:build.",
+					)
+				// Register on-chain FIRST: the local copy only exists once the
+				// request is a real transaction.
+				const res = await callRegistry<number>(
+					"request",
+					{
+						tenant: address,
+						owner: owner.payoutAddress,
+						listing_id: listing.id.slice(0, 64),
+						start: toUnix(q.start),
+						end: toUnix(q.end),
+						rent: stroops(q.rent),
+						deposit: stroops(q.deposit),
+						fee: stroops(q.fee),
+					},
+					address,
+					signTransaction,
+				)
 				const id = actions.createBooking({
 					...base,
 					tenantAddress: address,
 					ownerAddress: owner.payoutAddress,
-					resolverAddress: platformOr(address),
+					resolverAddress: platformAddress,
+					registryId: Number(res.value),
 				})
-				if (!platformAddress)
-					actions.logTx(id, {
-						label:
-							"Modo demo: sin PUBLIC_PLATFORM_ADDRESS, tu billetera actúa como árbitro",
-						kind: "offchain",
-						status: "confirmed",
-					})
-				if (registry) {
-					const txId = actions.logTx(id, {
-						label: "Solicitud registrada on-chain",
-						kind: "registry",
-						status: "pending",
-					})
-					try {
-						const res = await callRegistry<number>(
-							"request",
-							{
-								tenant: address,
-								owner: owner.payoutAddress,
-								listing_id: listing.id.slice(0, 64),
-								start: toUnix(q.start),
-								end: toUnix(q.end),
-								rent: stroops(q.rent),
-								deposit: stroops(q.deposit),
-							},
-							address,
-							signTransaction,
-						)
-						actions.updateBooking(id, { registryId: Number(res.value) })
-						actions.logTx(id, {
-							id: txId,
-							label: "Solicitud registrada on-chain",
-							kind: "registry",
-							status: "confirmed",
-							ref: res.hash,
-						})
-					} catch (e) {
-						actions.logTx(id, {
-							id: txId,
-							label: "Solicitud registrada on-chain",
-							kind: "registry",
-							status: "failed",
-							error: errorMessage(e),
-						})
-						actions.updateBooking(id, { status: "cancelled" })
-						throw e
-					}
-				} else {
-					actions.logTx(id, {
-						label:
-							"Solicitud creada (rental_registry no desplegado: sin registro on-chain)",
-						kind: "offchain",
-						status: "confirmed",
-					})
-				}
+				actions.logTx(id, {
+					label: "Solicitud registrada on-chain",
+					kind: "registry",
+					status: "confirmed",
+					ref: res.hash,
+				})
 				return id
 			} finally {
 				setBusy(false)
