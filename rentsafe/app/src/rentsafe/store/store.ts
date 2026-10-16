@@ -8,7 +8,13 @@
  * and search, plus the references to the on-chain objects.
  */
 import { RENTSAFE } from "../config"
-import { ME, SEED_LISTINGS, SEED_OWNERS, seedBookings } from "../data/seed"
+import {
+	ME,
+	photoUrl,
+	SEED_LISTINGS,
+	SEED_OWNERS,
+	seedBookings,
+} from "../data/seed"
 import {
 	type Booking,
 	type Listing,
@@ -40,13 +46,87 @@ const fresh = (): State => ({
 	favorites: [],
 })
 
+/**
+ * Demo listings are copied into localStorage on the first visit, so fixes to
+ * their seed data don't reach browsers that already saved them. A demo
+ * listing that still has its OLD photos (or title) gets the corrected ones
+ * from data/seed.ts; a listing the user edited is left untouched.
+ */
+const OLD_SEED: Record<string, { images: string[]; title?: string }> = {
+	"acc-escazu-loft": {
+		images: [
+			"1522708323590-d24dbb6b0267",
+			"1502672260266-1c1ef2d93688",
+			"1493809842364-78817add7ffb",
+		],
+	},
+	"acc-tamarindo-cabana": {
+		images: [
+			"1499793983690-e29da59ef1c2",
+			"1510798831971-661eb04b3739",
+			"1505693416388-ac5ce068fe85",
+		],
+	},
+	"acc-fortuna-room": {
+		images: ["1505691938895-1758d7feb511", "1540518614846-7eded433c457"],
+	},
+	"acc-santaana-house": {
+		images: [
+			"1568605114967-8130f3a36994",
+			"1512917774080-9991f1c4c750",
+			"1564013799919-ab600027ffc6",
+		],
+	},
+	"veh-suv-4x4": {
+		images: ["1549317661-bd32c8ce0db2", "1533473359331-0135ef1b58bf"],
+	},
+	"veh-moto-tamarindo": {
+		images: ["1558981806-ec527fa84c39", "1568772585407-9361f9bf3a87"],
+		title: "Moto 150cc para recorrer la costa",
+	},
+	"veh-bici-fortuna": {
+		images: ["1485965120184-e220f721d03e", "1532298229144-0ec0c57515c7"],
+	},
+	"veh-sedan-sj": { images: ["1503376780353-7e6692767b70"] },
+	"veh-scooter-heredia": { images: ["1604868189265-219ba7bf7ea3"] },
+	"tec-camara-mirrorless": {
+		images: ["1516035069371-29a1b244cc32", "1502920917128-1aa500764cbd"],
+	},
+	"eq-andamio": { images: ["1541888946425-d81bb19240f5"] },
+	"eq-hidrolavadora": { images: ["1581092160562-40aa08e78837"] },
+	"eq-podadora": { images: ["1558904541-efa843a96f01"] },
+	"eq-mezcladora": { images: ["1621905251189-08b45d6a269e"] },
+}
+
+function applySeedFixes(listings: State["listings"]): State["listings"] {
+	const seed = new Map(SEED_LISTINGS.map((l) => [l.id, l]))
+	return listings.map((l) => {
+		const old = OLD_SEED[l.id]
+		const s = seed.get(l.id)
+		if (!old || !s) return l
+		const oldImages = old.images.map(photoUrl)
+		const sameImages =
+			l.images.length === oldImages.length &&
+			l.images.every((u, i) => u === oldImages[i])
+		return {
+			...l,
+			images: sameImages ? s.images : l.images,
+			title: old.title && l.title === old.title ? s.title : l.title,
+		}
+	})
+}
+
 function load(): State {
 	try {
 		const raw = localStorage.getItem(RENTSAFE.storageKey)
 		if (raw) {
 			const parsed = JSON.parse(raw) as State
 			if (Array.isArray(parsed.listings) && Array.isArray(parsed.bookings))
-				return { ...fresh(), ...parsed }
+				return {
+					...fresh(),
+					...parsed,
+					listings: applySeedFixes(parsed.listings),
+				}
 		}
 	} catch {
 		// private mode / corrupted data: start fresh
