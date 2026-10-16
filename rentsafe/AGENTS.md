@@ -62,10 +62,12 @@ verified, version-specific facts that differ from your training data.
    `scaffold.yml` v2.
 7. Trustless Work is **API V1** with `@trustless-work/escrow@3.0.5`. Don't
    upgrade to the 5.x beta or mix V2 payloads.
-8. Reuse what exists before writing new code: `contracts/reputation` (contract
-   template), `ReputationPanel` (contract reads/writes from React), and, only
-   for escrow apps, `useEscrowTx` (every escrow write), `useMyEscrows`/
-   `useEscrow`, `EscrowCard`, `CreateEscrowForm`, `SetupChecklist`.
+8. Reuse what exists before writing new code: `contracts/rental-registry`
+   (contract patterns, tests with a Trustless Work mock),
+   `app/src/rentsafe/chain/registry.ts` (contract reads/writes from React),
+   `useEscrowTx` (every escrow write) and `app/src/trustless/usdc.ts`
+   (trustline + test USDC). The template's demo pages and example contracts were
+   removed; see the upstream scaffold if you need them.
 9. **Every signature goes through `useWallet().signTransaction`** (works for
    Cavos and extension wallets alike). Never import Stellar Wallets Kit or Cavos
    directly in features.
@@ -103,15 +105,11 @@ contracts/rental-registry/  RentSafe: bookings registry + escrow verification + 
 app/src/rentsafe/         RentSafe app (pages, components, store, chain/ = on-chain flow)
 docs/RENTSAFE.md          RentSafe technical guide (architecture, escrow, lifecycle, testnet)
 tests/escrow-e2e/         registry + real Trustless Work escrow integration tests
-contracts/reputation/     example Soroban contract (reviews tied to escrows) + tests
-contracts/fungible-allowlist, nft-enumerable/   OpenZeppelin examples (not deployed by default)
 environments.toml         contracts per environment (development = testnet)
-app/src/pages/            Home, Escrows (Escrow Studio), Debug (deployed contracts)
-app/src/trustless/        Trustless Work integration (config, provider, hooks, components)
+app/src/trustless/        Trustless Work integration (config, provider, useEscrowTx, USDC helpers)
 app/src/cavos/            Cavos embedded wallets (optional, PUBLIC_CAVOS_APP_ID)
 app/src/providers/        WalletProvider: one useWallet() for Cavos + extension wallets
-app/src/components/       shared UI (ReputationPanel, wallet buttons…)
-app/src/hooks/            useWallet, useNotification, useSubscription
+app/src/hooks/            useWallet, useNotification
 app-lib/                  network env, wallet kit, friendbot, events (shared TS lib)
 app-lib/clients/          GENERATED contract clients (gitignored)
 scripts/                  doctor, tw-smoke, agents-sync, dev-guard

@@ -28,18 +28,10 @@ default = true
 # emisor GBBD47…FLA5): los escrows vinculados deben custodiar este activo.
 rental_registry = { client = true, constructor_args = "--admin me --token CBIELTK6YBZJU5UP2WWQEUCYKLPU6AUNZ2BQ4WWFEIE3USCIHMXQDAMA" }
 # `client = true` means: build -> deploy -> generate a TS client you can import as
-#   import { reputation } from "@stellar-scaffold/app-lib/clients"
+#   import { rentalRegistry } from "@stellar-scaffold/app-lib/clients"
 # The key must be the snake_case version of the crate `name` in its Cargo.toml.
-reputation = { client = true }
-
-# OpenZeppelin examples that ship with Scaffold: compiled as references but NOT
-# deployed. Scaffold tries to deploy every crate in contracts/, so any contract you
-# don't want deployed must be listed with `client = false`.
-fungible_allowlist_example = { client = false }
-nft_enumerable_example = { client = false }
-# To deploy them (e.g. "mint an NFT badge when an escrow is released"), use instead:
-# fungible_allowlist_example = { client = true, constructor_args = "--name ExampleToken --symbol EXT --admin me --manager me --initial_supply 1000000000000000000000000" }
-# nft_enumerable_example = { client = true, constructor_args = "--uri https://example.com/nft/ --name ExampleNFT --symbol ENFT --owner me" }
+# Every crate in contracts/ is deployed, so a crate you don't want deployed must
+# be listed here with `client = false`.
 
 # Full syntax for a contract with a constructor and post-deploy calls:
 # [development.contracts.my_contract]
@@ -63,9 +55,6 @@ default = true
 
 [staging.contracts]
 rental_registry = { client = true, constructor_args = "--admin testnet-user --token CBIELTK6YBZJU5UP2WWQEUCYKLPU6AUNZ2BQ4WWFEIE3USCIHMXQDAMA" }
-reputation = { client = true }
-fungible_allowlist_example = { client = false }
-nft_enumerable_example = { client = false }
 
 ### Production: mainnet. Real money. Contracts are referenced by id, not deployed
 ### automatically. See .agents/skills/scaffold-stellar/references/deploy.md
@@ -79,4 +68,4 @@ name = "official-team-account"
 default = true
 
 [production.contracts]
-# reputation = { id = "C..." }
+# rental_registry = { id = "C..." }

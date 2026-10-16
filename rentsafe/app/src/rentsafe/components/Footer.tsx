@@ -1,9 +1,12 @@
 /**
  * Site footer: brand blurb, links to every category, help pages
- * ("Cómo funciona", legal) and the testnet disclaimer. Purely presentational.
+ * ("Cómo funciona", legal), the registry contract on the block explorer and
+ * the testnet disclaimer. Purely presentational.
  */
 import { Link } from "react-router-dom"
+import { explorerUrl } from "../../trustless/config"
 import { CATEGORIES } from "../categories"
+import { registryContractId } from "../chain/registry"
 import styles from "./Footer.module.css"
 import { Logo } from "./Header"
 
@@ -34,7 +37,15 @@ export const Footer = () => (
 				<Link to="/como-funciona">Cómo funciona</Link>
 				<Link to="/como-funciona#proteccion">Protección del depósito</Link>
 				<Link to="/propietario/publicar">Publicar un bien</Link>
-				<Link to="/debug">Contratos desplegados</Link>
+				{registryContractId && (
+					<a
+						href={explorerUrl(registryContractId)}
+						target="_blank"
+						rel="noreferrer"
+					>
+						Contrato en Stellar
+					</a>
+				)}
 			</nav>
 			<nav aria-label="Legal">
 				<h4>Legal</h4>

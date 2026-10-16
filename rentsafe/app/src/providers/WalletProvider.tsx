@@ -50,14 +50,13 @@ export interface WalletContextType {
 	disconnect: () => Promise<void>
 }
 
-export const WalletContext = // @ts-ignore
-	createContext<WalletContextType>({
-		isPending: true,
-		balances: {},
-		updateBalances: async () => {},
-		disconnect: async () => {},
-		signTransaction: extensionSignTransaction,
-	})
+export const WalletContext = createContext<WalletContextType>({
+	isPending: true,
+	balances: {},
+	updateBalances: async () => {},
+	disconnect: async () => {},
+	signTransaction: extensionSignTransaction,
+})
 
 export const WalletProvider = ({ children }: { children: React.ReactNode }) => {
 	const cavos = useCavosState()

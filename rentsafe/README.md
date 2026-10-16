@@ -91,8 +91,7 @@ entre con su correo.
 | [Cavos](https://docs.cavos.xyz) | Wallets embebidas: los usuarios inician sesión con correo o Google y obtienen una cuenta Stellar sin instalar extensiones. La llave pertenece al usuario y se guarda en un entorno aislado al que ni la aplicación ni Cavos tienen acceso. |
 | Skills para agentes | Instrucciones verificadas en `AGENTS.md` y `.agents/skills/` para que cualquier agente construya sobre estas piezas sin inventar APIs. |
 | Servidores MCP | [Stellar Raven](https://raven.stellar.org) (documentación y ecosistema de Stellar), documentación de Trustless Work y el asistente de contratos de OpenZeppelin, ya configurados para los principales agentes. Stellar Raven pide iniciar sesión en el navegador la primera vez. |
-| Escrow Studio (`/escrows`) | Interfaz para crear, fondear, aprobar, liberar, disputar y resolver escrows, con una guía para preparar la cuenta. |
-| Contrato `reputation` | Contrato de ejemplo con reseñas on-chain ligadas a cada escrow: almacenamiento, permisos, errores, eventos y tests. |
+| Contrato `rental_registry` | Registro on-chain de RentSafe: reservas, verificación del escrow vinculado y reseñas verificadas, con tests unitarios y de integración. |
 | Scripts | `setup:tools` (instala herramientas sin compilar), `doctor` (diagnóstico), `check` (tests, formato, tipos y lint), `tw:smoke` (prueba de escrows de punta a punta). |
 
 No todas las aplicaciones necesitan los tres componentes. Una aplicación de votaciones, por ejemplo, es un contrato Soroban con inicio de sesión por correo y no usa escrows. El agente elige los componentes según la idea.
@@ -162,7 +161,7 @@ npm run doctor        # crea app/.env e indica qué falta
 
 Ambas se guardan en `app/.env` y son opcionales según lo que use tu aplicación.
 
-**Trustless Work** (solo si tu aplicación usa escrows, y para probar el Escrow Studio):
+**Trustless Work** (necesaria para los escrows de RentSafe):
 
 1. Entra a [dapp.trustlesswork.com](https://dapp.trustlesswork.com) y conecta una wallet.
 2. Abre tu dirección (abajo a la izquierda) → **Settings** y completa tu perfil. El campo _Use case_ es obligatorio.
@@ -187,9 +186,9 @@ Abre [localhost:5173](http://localhost:5173). La primera ejecución tarda uno o 
 
 ### 5. Preparar tu cuenta
 
-Selecciona **Sign in** (correo o Google) o **Use a wallet** (Freighter en **Testnet**) y luego **Fund Account** para recibir XLM de prueba mediante Friendbot. Con eso puedes usar cualquier contrato.
+Selecciona **Conectar billetera** (Cavos con correo o Google, o Freighter en **Testnet**).
 
-Para probar escrows, abre **Escrow Studio** y sigue la guía: **Add trustline** → **Swap 100 XLM → USDC**.
+Para alquilar on-chain, abre **Perfil → Billetera y cuenta Stellar** y sigue la guía: **Activar con Friendbot** → **Habilitar USDC (trustline)** → **Conseguir USDC de prueba**.
 
 > Si iniciaste sesión con Cavos, usa Friendbot antes que cualquier otra acción: la cuenta nueva necesita XLM de prueba para pagar las comisiones. Al firmar acciones en contratos o escrows, Cavos muestra su propia ventana de aprobación.
 
@@ -237,9 +236,11 @@ Más ideas, con y sin escrows, en [`ideas.md`](.agents/skills/build-dapp/referen
 ```
 AGENTS.md               instrucciones para cualquier agente (CLAUDE.md lo importa)
 .agents/skills/         skills (fuente de verdad; .claude/skills apunta aquí)
-contracts/reputation/   contrato Soroban de ejemplo y sus tests
+contracts/rental-registry/  contrato Soroban de RentSafe y sus tests
+tests/escrow-e2e/       tests de integración con el escrow real de Trustless Work
 environments.toml       qué contratos se despliegan y dónde (development = testnet)
-app/src/pages/          páginas: Home, Escrows (Escrow Studio), contratos desplegados
+app/src/rentsafe/       la aplicación RentSafe (páginas, componentes, flujo on-chain)
+docs/RENTSAFE.md        guía técnica de RentSafe
 app/src/cavos/          inicio de sesión con correo o Google y wallet embebida (Cavos)
 app/src/providers/      WalletProvider: un único useWallet() para Cavos y extensiones
 app/src/trustless/      escrows de Trustless Work (configuración, hooks, componentes)
@@ -257,8 +258,8 @@ Ejecuta `npm run doctor` y consulta la [guía de problemas comunes](.agents/skil
 
 - `stellar-scaffold-cli` **0.0.27** con la configuración **v1** (`environments.toml`). El template oficial de Scaffold ya usa un formato nuevo (v2) que esta versión del CLI no soporta, por eso este repositorio se distribuye ya generado y no es necesario ejecutar `stellar scaffold init`.
 - `@trustless-work/escrow` **3.0.5** (API V1, estable).
-- `@cavos/kit` **0.2.5**.
-- `soroban-sdk` **26.1** y OpenZeppelin `stellar-*` **0.7.2**.
+- `@cavos/kit` **0.4.2**.
+- `soroban-sdk` **26.1**.
 
 ## Comparte tu proyecto
 
