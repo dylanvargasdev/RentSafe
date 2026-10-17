@@ -178,7 +178,9 @@ cargue `index.html`.
    Variables_ (usar una API key de Trustless Work exclusiva para la demo: va
    dentro de la página y cualquiera puede verla).
 3. En el panel de Cavos, agregar el dominio publicado a los orígenes permitidos
-   y a las Callback URLs de Google.
+   y, como Callback URLs de Google, `<dominio>/` y `<dominio>/perfil` (Cavos
+   devuelve a la página donde empezó el login y RentSafe solo lo inicia desde
+   esas dos).
 
 Cada fusión en `main` vuelve a publicar la página.
 

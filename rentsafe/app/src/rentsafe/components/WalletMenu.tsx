@@ -1,9 +1,10 @@
 import { connectWallet, shortAddress } from "@stellar-scaffold/app-lib"
 import { useEffect, useRef, useState } from "react"
-import { Link } from "react-router-dom"
+import { Link, useLocation, useNavigate } from "react-router-dom"
 import { useCavosState } from "../../cavos/context"
 import { useWallet } from "../../hooks/useWallet"
 import { USDC_BALANCE_KEY } from "../../trustless/config"
+import { useSession } from "../store/useRentSafe"
 import styles from "./Header.module.css"
 import { Icon } from "./Icon"
 
@@ -15,6 +16,9 @@ import { Icon } from "./Icon"
 export const WalletMenu = () => {
 	const { address, connector, isPending, balances, disconnect } = useWallet()
 	const cavos = useCavosState()
+	const session = useSession()
+	const navigate = useNavigate()
+	const { pathname } = useLocation()
 	const [open, setOpen] = useState(false)
 	const ref = useRef<HTMLDivElement>(null)
 
@@ -147,8 +151,14 @@ export const WalletMenu = () => {
 										className="btn btn-sm btn-primary"
 										disabled={connecting}
 										onClick={() => {
-											cavos.signIn()
 											setOpen(false)
+											// Cavos sends Google back to the page the login started
+											// on, and only accepts URLs registered in its dashboard:
+											// start it from the profile (or home, without a RentSafe
+											// account) so there are just two URLs to register.
+											const loginPath = session ? "/perfil" : "/"
+											if (pathname !== loginPath) void navigate(loginPath)
+											setTimeout(() => cavos.signIn(), 0)
 										}}
 									>
 										Con correo o Google
