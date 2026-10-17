@@ -329,6 +329,23 @@
 		gap: 10px;
 		height: 60px;
 	}
+	/* On phones the menus anchor to the (sticky) header instead of their button,
+	   so a 320px panel never runs off the left edge of the screen. */
+	.menuWrap {
+		position: static;
+	}
+	.popover {
+		top: 64px;
+		left: 12px;
+		right: 12px;
+		width: auto;
+		max-height: calc(100dvh - 88px);
+		overflow-y: auto;
+	}
+	.menu {
+		left: auto;
+		width: 240px;
+	}
 	.search {
 		display: none;
 	}
