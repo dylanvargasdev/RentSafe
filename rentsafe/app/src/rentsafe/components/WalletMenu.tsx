@@ -151,7 +151,7 @@ export const WalletMenu = () => {
 							<p className="small muted">
 								{cavos?.hasPasskey
 									? "Desbloquea la billetera con la passkey que creaste antes."
-									: "Tu billetera se creó en otro navegador o dispositivo y no tiene passkey para abrirla aquí. Úsala desde ese navegador, o entra de nuevo si fue en este."}
+									: "Tu billetera se creó en otro dispositivo o en otra dirección web (por ejemplo, en localhost) y no tiene passkey para abrirla aquí. Ábrela donde la creaste, o entra con otro correo para crear una billetera nueva en este sitio."}
 							</p>
 							<div className={styles.popActions}>
 								{cavos?.hasPasskey && (
@@ -171,7 +171,7 @@ export const WalletMenu = () => {
 										setTimeout(() => cavos?.signInAgain(), 0)
 									}}
 								>
-									Entrar de nuevo
+									{cavos?.hasPasskey ? "Entrar de nuevo" : "Usar otra cuenta"}
 								</button>
 								<button
 									className="btn btn-sm btn-ghost"
