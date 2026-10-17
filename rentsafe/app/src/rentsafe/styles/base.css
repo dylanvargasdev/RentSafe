@@ -440,7 +440,8 @@ button {
 }
 
 .section {
-	padding: clamp(28px, 4vw, 48px) 0;
+	/* Vertical only: combined with .rs-container it must keep the side gutter. */
+	padding-block: clamp(28px, 4vw, 48px);
 }
 .section-head {
 	display: flex;
