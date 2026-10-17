@@ -118,22 +118,65 @@ export const WalletMenu = () => {
 								</button>
 							</div>
 						</>
+					) : state === "locked" && cavos?.sessionExpired ? (
+						<>
+							<p className={styles.popTitle}>Vuelve a entrar a tu billetera</p>
+							<p className="small muted">
+								Por seguridad, tu sesión de la billetera dura lo que dura la
+								pestaña. Entra otra vez con el mismo correo o cuenta de Google:
+								tu billetera y tus fondos siguen igual.
+							</p>
+							<div className={styles.popActions}>
+								<button
+									className="btn btn-sm btn-primary"
+									onClick={() => {
+										setOpen(false)
+										const loginPath = session ? "/perfil" : "/"
+										if (pathname !== loginPath) void navigate(loginPath)
+										setTimeout(() => cavos.signInAgain(), 0)
+									}}
+								>
+									Entrar de nuevo
+								</button>
+								<button className="btn btn-sm" onClick={cavos.signOut}>
+									Salir
+								</button>
+							</div>
+						</>
 					) : state === "locked" ? (
 						<>
 							<p className={styles.popTitle}>
 								Este navegador aún no tiene tu llave
 							</p>
 							<p className="small muted">
-								Desbloquea la billetera con la passkey que creaste antes.
+								{cavos?.hasPasskey
+									? "Desbloquea la billetera con la passkey que creaste antes."
+									: "Tu billetera se creó en otro dispositivo o en otra dirección web (por ejemplo, en localhost) y no tiene passkey para abrirla aquí. Ábrela donde la creaste, o entra con otro correo para crear una billetera nueva en este sitio."}
 							</p>
 							<div className={styles.popActions}>
+								{cavos?.hasPasskey && (
+									<button
+										className="btn btn-sm btn-primary"
+										onClick={() => void cavos.approveDevice().catch(() => {})}
+									>
+										Desbloquear con passkey
+									</button>
+								)}
 								<button
-									className="btn btn-sm btn-primary"
-									onClick={() => void cavos?.approveDevice()}
+									className={`btn btn-sm ${cavos?.hasPasskey ? "" : "btn-primary"}`}
+									onClick={() => {
+										setOpen(false)
+										const loginPath = session ? "/perfil" : "/"
+										if (pathname !== loginPath) void navigate(loginPath)
+										setTimeout(() => cavos?.signInAgain(), 0)
+									}}
 								>
-									Desbloquear con passkey
+									{cavos?.hasPasskey ? "Entrar de nuevo" : "Usar otra cuenta"}
 								</button>
-								<button className="btn btn-sm" onClick={cavos?.signOut}>
+								<button
+									className="btn btn-sm btn-ghost"
+									onClick={cavos?.signOut}
+								>
 									Salir
 								</button>
 							</div>

@@ -1,5 +1,5 @@
 import { CavosProvider, useCavos } from "@cavos/kit/react"
-import { type ReactNode, useMemo } from "react"
+import { type ReactNode, useCallback, useMemo } from "react"
 import {
 	CAVOS_APP_SALT,
 	cavosAppId,
@@ -46,10 +46,43 @@ export const CavosRoot = ({ children }: { children: ReactNode }) => {
 	)
 }
 
+/** Where @cavos/kit 0.4.2 keeps this tab's login token (CavosAuth.authTokenKey). */
+const TOKEN_KEY = `cavos-kit:token:${cavosAppId || "default"}`
+const hasLoginToken = () => {
+	try {
+		return Boolean(window.sessionStorage.getItem(TOKEN_KEY))
+	} catch {
+		return false
+	}
+}
+
 const CavosBridge = ({ children }: { children: ReactNode }) => {
 	const cavos = useCavos()
 	const wallet = cavos.wallet?.chain === "stellar" ? cavos.wallet : null
 	const { needsDeviceApproval, hasPasskey } = cavos.walletStatus
+	const { openModal, clearAuthError, logout } = cavos
+	// A restored session without its token can't reach the wallet registry
+	// ("registry lookup skipped: no login token"): the wallet then looks locked,
+	// and unlocking just reconnects without a token again, in a loop.
+	const sessionExpired =
+		cavos.isAuthenticated && needsDeviceApproval && !hasLoginToken()
+
+	// Errors from a silent reconnect are stale by the time the user opens the
+	// modal; don't greet them with "registry lookup skipped".
+	const signIn = useCallback(() => {
+		clearAuthError()
+		openModal()
+	}, [clearAuthError, openModal])
+
+	// Logging out only forgets this session; the wallet key stays on the
+	// device, and a fresh login (with its token) reconnects the same wallet.
+	const signInAgain = useCallback(() => {
+		logout()
+		setTimeout(() => {
+			clearAuthError()
+			openModal()
+		}, 0)
+	}, [logout, clearAuthError, openModal])
 
 	const value = useMemo<CavosState>(
 		() => ({
@@ -58,8 +91,11 @@ const CavosBridge = ({ children }: { children: ReactNode }) => {
 			address: wallet?.address,
 			email: cavos.user?.email,
 			needsDeviceApproval,
+			sessionExpired,
+			hasPasskey,
 			error: cavos.authError,
-			signIn: cavos.openModal,
+			signIn,
+			signInAgain,
 			signOut: cavos.logout,
 			approveDevice: cavos.approveDeviceWithPasskey,
 			addPasskey:
@@ -75,7 +111,15 @@ const CavosBridge = ({ children }: { children: ReactNode }) => {
 					})
 				: undefined,
 		}),
-		[cavos, wallet, needsDeviceApproval, hasPasskey],
+		[
+			cavos,
+			wallet,
+			needsDeviceApproval,
+			sessionExpired,
+			hasPasskey,
+			signIn,
+			signInAgain,
+		],
 	)
 
 	return <CavosContext value={value}>{children}</CavosContext>
