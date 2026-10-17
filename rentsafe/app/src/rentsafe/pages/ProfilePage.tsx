@@ -62,7 +62,12 @@ export const WalletSetup = () => {
 			action: !address && (
 				<div className="row">
 					{cavos && (
-						<button className="btn btn-sm btn-primary" onClick={cavos.signIn}>
+						<button
+							className="btn btn-sm btn-primary"
+							onClick={
+								cavos.needsDeviceApproval ? cavos.signInAgain : cavos.signIn
+							}
+						>
 							Con correo o Google
 						</button>
 					)}

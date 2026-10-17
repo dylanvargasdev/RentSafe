@@ -18,9 +18,20 @@ export interface CavosState {
 	email?: string
 	/** Signed in on a browser that doesn't hold the wallet key yet. */
 	needsDeviceApproval: boolean
+	/**
+	 * The session was restored from storage without its login token. Cavos keeps
+	 * that token per tab (sessionStorage), so a new tab or a browser restart
+	 * reconnects "blind": the wallet registry can't be read and the wallet looks
+	 * locked. Unlocking can't fix it; logging in again does.
+	 */
+	sessionExpired: boolean
+	/** A passkey exists for this wallet, so `approveDevice` can unlock it here. */
+	hasPasskey: boolean
 	error: string | null
 	/** Opens the Cavos login modal (email code / Google). */
 	signIn: () => void
+	/** Logs out and opens the login modal again, to get a fresh login token. */
+	signInAgain: () => void
 	signOut: () => void
 	/** Unlock the wallet on this device with a passkey added earlier. */
 	approveDevice: () => Promise<void>
