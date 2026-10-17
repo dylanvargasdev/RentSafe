@@ -171,7 +171,7 @@ Ambas se guardan en `app/.env` y son opcionales según lo que use tu aplicación
 **Cavos** (inicio de sesión con correo o Google):
 
 1. En el [dashboard de Cavos](https://cavos.xyz/dashboard), crea una aplicación y copia su **App ID**.
-2. En **Settings → allowed web origins**, agrega `http://localhost:5173`. Para iniciar sesión con Google, agrégalo también en **Callback URLs**.
+2. En **Settings → allowed web origins**, agrega `http://localhost:5173`. Para iniciar sesión con Google, agrega en **Callback URLs** `http://localhost:5173/` y `http://localhost:5173/perfil`.
 3. Agrégalo como `PUBLIC_CAVOS_APP_ID="..."`.
 
 > El App ID de Cavos es público por diseño y no es un secreto: si alguien ya te compartió uno, puedes usarlo. Sin App ID, la aplicación funciona solo con wallets de extensión.

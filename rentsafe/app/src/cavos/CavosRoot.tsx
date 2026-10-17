@@ -29,7 +29,10 @@ export const CavosRoot = ({ children }: { children: ReactNode }) => {
 				// One chain + passkey restore: works without enabling social
 				// recovery in the dashboard. Signing up never asks for a passkey.
 				deviceApproval: "passkey",
-				// Google login returns here: register this exact URL in the dashboard.
+				// NOTE: @cavos/kit 0.4.2's modal ignores this for Google and returns
+				// to the page where login started (origin + pathname). RentSafe only
+				// starts Cavos login from "/" or "/perfil" (see WalletMenu), so
+				// register `<origin>/` and `<origin>/perfil` as Callback URLs.
 				redirectUri: window.location.origin,
 			}}
 			modal={{
